@@ -4,8 +4,6 @@ import sqlobject.sqlbuilder as sqlb
 sql.col.default_datetime_implementation = sql.MXDATETIME_IMPLEMENTATION
 
 
-
-
 class User(sql.SQLObject):
     name = sql.StringCol()
     password = sql.StringCol()
@@ -14,11 +12,15 @@ class User(sql.SQLObject):
     purchaseBills = sql.MultipleJoin('PurchaseBill')
 
 
+
+
 class Session(sql.SQLObject):
     user = sql.StringCol()
     time = sql.DateTimeCol()
     host = sql.StringCol()
     port = sql.IntCol()
+
+
 
 
 class SessionLog(sql.SQLObject):
@@ -30,9 +32,13 @@ class SessionLog(sql.SQLObject):
     action = sql.StringCol()
 
 
+
+
 class TaxCategory(sql.SQLObject):
     name = sql.StringCol()
     rate = sql.FloatCol()
+
+
 
 
 class Item(sql.SQLObject):
@@ -40,12 +46,13 @@ class Item(sql.SQLObject):
     desc  = sql.StringCol()
     unit = sql.StringCol()
     selling = sql.FloatCol()
-    #available = sql.FloatCol()
     stockStart = sql.FloatCol()
     stockIn = sql.FloatCol()
     stockOut = sql.FloatCol()
     taxCategory = sql.ForeignKey('TaxCategory', notNull=True)
     purchases = sql.MultipleJoin('Purchase')
+
+
 
 
 class Supplier(sql.SQLObject):
@@ -55,11 +62,15 @@ class Supplier(sql.SQLObject):
     purchasebills = sql.MultipleJoin('PurchaseBill')
 
 
+
+
 class PurchaseBill(sql.SQLObject):
     time = sql.DateTimeCol()
     supplier = sql.ForeignKey('Supplier')
     user = sql.ForeignKey('User', notNull=True)
     purchases = sql.MultipleJoin('Purchase')
+
+
 
 
 class Purchase(sql.SQLObject):
@@ -70,10 +81,14 @@ class Purchase(sql.SQLObject):
     expiry = sql.DateTimeCol()
 
 
+
+
 class PaymentMethod(sql.SQLObject):
     name = sql.StringCol()
     account = sql.ForeignKey('Account')
     invoices = sql.MultipleJoin('Invoice')
+
+
 
 
 class Invoice(sql.SQLObject):
@@ -91,6 +106,8 @@ class Invoice(sql.SQLObject):
     printed = sql.BoolCol()
 
 
+
+
 class Sold(sql.SQLObject):
     invoice = sql.ForeignKey('Invoice', notNull=True)
     item = sql.ForeignKey('Item', notNull=True)
@@ -101,6 +118,8 @@ class Sold(sql.SQLObject):
     totalTax = sql.FloatCol()
 
 
+
+
 class Account(sql.SQLObject):
     name = sql.StringCol()
     amount = sql.FloatCol()
@@ -108,11 +127,15 @@ class Account(sql.SQLObject):
     expenditure = sql.MultipleJoin('Expenditure')
 
 
+
+
 class Expenditure(sql.SQLObject):
     name = sql.StringCol()
     amount = sql.FloatCol()
     time = sql.DateTimeCol()
     account = sql.ForeignKey('Account', notNull=True)
+
+
 
 
 class Db(object):
@@ -123,7 +146,6 @@ class Db(object):
 
 
         try:
-
             PaymentMethod.createTable()
             Invoice.createTable()
             PurchaseBill.createTable()
@@ -139,16 +161,6 @@ class Db(object):
             SessionLog.createTable()
 
             #Debug data
-            '''
-            item1 = Item(bcode=1001, desc="Sock", unit="PCS", selling=100, stockStart=20, stockIn=0, stockOut=0, taxCategory=1)
-
-            defaultAccount = Account(name='Cash Card', amount=0.0)
-            defaultPaymentMethod = PaymentMethod(name="Cash", account=1)
-
-            testUser = User(name='a',password='a', privilages='LOGIN')
-            testUser = User(name='ali',password='ali.log', privilages='LOGIN')
-            testUser = User(name='shooga',password='shooga.log', privilages='LOGIN')
-            '''
             CashAccount = Account(name='Cash Account', amount=0.0)
             CashMethod = PaymentMethod(name="Cash", account=CashAccount.id)
 
@@ -158,11 +170,11 @@ class Db(object):
             defaultSupplier = Supplier(name='Default')
             dafaultTax = TaxCategory(name='GST', rate=6.0)
 
-            RootUser = User(name='admin',password='admin', privilages='LOGIN')
+            AdminUser = User(name='admin',password='admin', privilages='LOGIN')
         except sql.dberrors.OperationalError:
             print "table exists"
 
-
+        "This is just a shortcut to access table from with in the class"
         self.User = User
         self.Session = Session
         self.SessionLog = SessionLog

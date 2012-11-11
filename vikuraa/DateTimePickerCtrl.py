@@ -1,9 +1,10 @@
 import wx
 from mx import DateTime
 
+
 class DateTimePickerCtrl(wx.Panel):
     def __init__(self, parent, size=wx.Size(-1, -1), showtime = True):
-        wx.Panel.__init__(self, parent, style=wx.SUNKEN_BORDER, size=size)
+        wx.Panel.__init__(self, parent, size=size)
         self.showtime = showtime
         self.SetBackgroundColour('WHITE')
         self._InitCtrls()
@@ -20,13 +21,14 @@ class DateTimePickerCtrl(wx.Panel):
         if not self.showtime:
             self.TimePicker.Hide()
 
+
     def SetValue(self, value):
-        '''
-        value as mx.DateTime
-        '''
+        "value as mx.DateTime"
+
         self.DatePicker.Show()
 
         tm_year,tm_mon,tm_mday,tm_hour,tm_min,tm_sec,tm_wday,tm_yday,tm_isdst = value.tuple()
+
         try:
             dt = wx.DateTimeFromDMY(tm_mday,tm_mon,tm_year)
             self.DatePicker.SetValue(dt)
@@ -68,9 +70,8 @@ class DateTimePickerCtrl(wx.Panel):
 
 
 
-
-
 if __name__ == "__main__":
+    "For testing"
     app = wx.App()
     frame = wx.Frame(None)
     pnl = DateTimePickerCtrl(frame)

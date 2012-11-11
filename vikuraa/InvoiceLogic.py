@@ -1,5 +1,5 @@
-import locale
 from mx import DateTime
+import Format
 
 
 class InvoiceLogic(object):
@@ -43,8 +43,6 @@ class InvoiceLogic(object):
     #DisableUI = None
     #EnableUI = None
 
-    CurrencyFormat = locale.currency
-
     InvoiceTotal = 0.0
     InvoiceTaxTotal = 0.0
 
@@ -52,11 +50,6 @@ class InvoiceLogic(object):
         self.db = db
         self.session = session
         self.peripherals = peripherals
-
-
-    def CurrencyFormat(self, value, symbol='Rf'):
-        curr = locale.currency(value, grouping=True, symbol=False)
-        return symbol + curr
 
 
     def AddItem(self, code, byitemid=False):
@@ -215,8 +208,8 @@ class InvoiceLogic(object):
         self.InvoiceTotal = self.GetColSum(self.COL_TOTAL)
         self.InvoiceTaxTotal = self.GetColSum(self.COL_GST)
 
-        self.SetTotal(self.CurrencyFormat(self.InvoiceTotal))
-        self.SetTax(self.CurrencyFormat(self.InvoiceTaxTotal))
+        self.SetTotal(Format.Currency(self.InvoiceTotal))
+        self.SetTax(Format.Currency(self.InvoiceTaxTotal))
 
 
     def Print(self, invoice, isreprint=True):
@@ -256,11 +249,11 @@ class InvoiceLogic(object):
             descs.append(sold.item.desc)
             qtys.append(('%g' % sold.qty))
             rate = sold.rate - sold.totalTax
-            rates.append(self.CurrencyFormat(rate, ''))
+            rates.append(Format.Currency(rate, symbol=''))
             total = rate * sold.qty
-            totals.append(self.CurrencyFormat(total, ''))
+            totals.append(Format.Currency(total, symbol=''))
             subtotal += total
-            #discounts.append(self.CurrencyFormat(sold.discount, ''))
+            #discounts.append(Format.Currency(sold.discount, symbol=''))
 
         p.Table([
             ['Desc' , p.ALIGN_L, descs],
@@ -270,17 +263,17 @@ class InvoiceLogic(object):
             ['Amnt' , p.ALIGN_R, totals]])
 
         p.Line_b()
-        p.Line_r('   Sub Total Rf' + (self.CurrencyFormat(subtotal,'').rjust(10)))
-        p.Line_r('      6% GST Rf' + (self.CurrencyFormat(invoice.totalTax,'').rjust(10)))
+        p.Line_r('   Sub Total Rf' + (Format.Currency(subtotal, symbol='').rjust(10)))
+        p.Line_r('      6% GST Rf' + (Format.Currency(invoice.totalTax, symbol='').rjust(10)))
         p.SetBig_on()
         p.SetColor_red()
-        p.Line_r('   Total Due Rf' + (self.CurrencyFormat(invoice.total,'').rjust(10)))
+        p.Line_r('   Total Due Rf' + (Format.Currency(invoice.total, symbol='').rjust(10)))
         p.SetBig_off()
         p.SetColor_black()
 
         if invoice.paymentMethod.id == 1:
-            p.Line_r('      Tender Rf' + (self.CurrencyFormat(invoice.tendered,'').rjust(10)))
-            p.Line_r('     Balance Rf' + (self.CurrencyFormat(invoice.balance,'').rjust(10)))
+            p.Line_r('      Tender Rf' + (Format.Currency(invoice.tendered, symbol='').rjust(10)))
+            p.Line_r('     Balance Rf' + (Format.Currency(invoice.balance, symbol='').rjust(10)))
         else:
             p.Line_r('   Payment by {0}'.format(invoice.paymentMethod.name))
             if invoice.approvalCode != '':

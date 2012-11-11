@@ -16,7 +16,7 @@ class EpsonEscPos(ReciptPrinter):
     http://nicholas.piasecki.name/blog/wp-content/uploads/2009/12/ESC-POS-Command-Guide.pdf
     and
     http://code.google.com/p/python-escpos
-    (not all are implemented)
+    (not all commands are implemented yet)
 
     Raises IOError if printer not found/not working on init
     '''
@@ -167,6 +167,7 @@ class EpsonEscPos(ReciptPrinter):
         self._cut()
         self.FeedReverse(2)
 
+
     def Barcode(self, code):
         self._raw('\n')
         self._raw(self.TXT_ALIGN_CT)
@@ -185,7 +186,6 @@ class EpsonEscPos(ReciptPrinter):
 
         self._raw(code)
         self._raw('\n')
-
 
 
 

@@ -3,9 +3,11 @@ import wx
 from wxHelpers import *
 from NumberDisplay import NumberDisplay
 
+import Format
+
 class PaymentDialog(wx.Dialog):
     def __init__(self, parent, paymentMethods, invoiceTotal,
-                        invoiceTaxTotal, currencyformat):
+                        invoiceTaxTotal):
         wx.Dialog.__init__(
                 self,
                 parent = parent,
@@ -16,14 +18,13 @@ class PaymentDialog(wx.Dialog):
         self.PaymentMethods = paymentMethods
         self.InvoiceTotal = invoiceTotal
         self.InvoiceTaxTotal = invoiceTaxTotal
-        self.CurrencyFormat = currencyformat
 
         self._InitCtrls()
 
         self.Total = invoiceTotal
-        self.stTotal.SetLabel(self.CurrencyFormat(invoiceTotal))
+        self.stTotal.SetLabel(Format.Currency(invoiceTotal))
         self.Tax = invoiceTotal
-        self.stTax.SetLabel(self.CurrencyFormat(invoiceTaxTotal))
+        self.stTax.SetLabel(Format.Currency(invoiceTaxTotal))
         self.tcTender.SetValue('')
 
         self.Balance = 0
@@ -42,7 +43,7 @@ class PaymentDialog(wx.Dialog):
         except ValueError:
             self.Balance = 0
 
-        self.tcBalance.SetLabel(self.CurrencyFormat(self.Balance))
+        self.tcBalance.SetLabel(Format.Currency(self.Balance))
 
         self.Layout()
 

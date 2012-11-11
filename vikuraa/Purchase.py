@@ -8,6 +8,7 @@ from DbComboBox import DbComboBox
 from Grid import *
 
 import Resource
+import Format
 
 class Purchase(wx.Panel):
     Logic = None
@@ -118,7 +119,7 @@ class Purchase(wx.Panel):
                     self.Logic.COL_ITEM_DESC : VGridStringColumn('Desc'),
                     self.Logic.COL_QTY : VGridNumberCol('Qty'),
                     self.Logic.COL_ITEM_UNIT: VGridStringColumn('Unit'),
-                    self.Logic.COL_COST : VGridCurrencyCol('Cost', None, symbol="Rf"),
+                    self.Logic.COL_COST : VGridCurrencyCol('Cost', None, symbol=Format.CurrencySymbol),
                     self.Logic.COL_ITEM_SELLING : VGridCurrencyCol('Selling', None, symbol="Rf"),
                     self.Logic.COL_EXPIRY : VGridDateCol('Expiry', Hidden=True)
                 })

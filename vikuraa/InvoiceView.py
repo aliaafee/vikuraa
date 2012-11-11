@@ -7,6 +7,7 @@ from InvoiceLogic import InvoiceLogic
 import sqlobject
 
 import Resource
+import Format
 
 class InvoiceViewLogic(InvoiceLogic):
     SetInvoiceId = None
@@ -49,12 +50,12 @@ class InvoiceViewLogic(InvoiceLogic):
                     sold.totalTax,
                     sold.discount,
                     sold.total])
-        self.SetTax(self.CurrencyFormat(self.invoice.totalTax))
-        self.SetTotal(self.CurrencyFormat(self.invoice.total))
+        self.SetTax(Format.Currency(self.invoice.totalTax))
+        self.SetTotal(Format.Currency(self.invoice.total))
         if self.invoice.paymentMethod.id == 1:
             self.SetShowCash()
-            self.SetTendered(self.CurrencyFormat(self.invoice.tendered))
-            self.SetBalance(self.CurrencyFormat(self.invoice.balance))
+            self.SetTendered(Format.Currency(self.invoice.tendered))
+            self.SetBalance(Format.Currency(self.invoice.balance))
         else:
             self.SetHideCash()
             self.SetPaymentMethod(self.invoice.paymentMethod.name)
@@ -121,7 +122,6 @@ class InvoiceView(Invoice):
         self.OnForward = logic.OnForward
         self.OnPrint = logic.OnPrint
         self.OnGotoInvoice = logic.GoToInvoice
-        self.CurrencyFormat = logic.CurrencyFormat
 
 
     def _GlueLogic(self):

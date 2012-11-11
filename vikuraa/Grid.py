@@ -2,6 +2,7 @@ import  wx
 import  wx.grid as  gridlib
 from mx import DateTime
 import locale
+import Format
 
 
 class NumberRenderer(gridlib.PyGridCellRenderer):
@@ -73,7 +74,7 @@ class CurrencyRenderer(NumberRenderer):
 
     def Draw2(self, grid, attr, dc, rect, row, col, isSelected):
 
-        text = locale.currency(grid.GetCellValue(row, col), grouping=True, symbol=False)
+        text = Format.Currency(grid.GetCellValue(row, col), grouping=True, symbol='')
 
         w, h = dc.GetTextExtent(text)
         sw, sh = dc.GetTextExtent('   ' + self.symbol)
@@ -209,7 +210,7 @@ class VGridCurrencyCol(VGridNumberCol):
 
     def ValueToString(self, value):
         if self.round:
-            return locale.currency(value, grouping=False, symbol=False)
+            return  Format.Currency(value, grouping=False, symbol='')
         else:
             return str(value)
 

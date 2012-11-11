@@ -4,6 +4,8 @@ import wx
 
 import wx.lib.mixins.listctrl  as  listmix
 
+import Format
+
 
 LIST_COL_TYPE_TEXT = 1
 LIST_COL_TYPE_INTEGER = 2
@@ -14,9 +16,11 @@ LIST_COL_TYPE_PERCENT = 5
 POPUPID_DEL = wx.NewId()
 
 class EditableListCtrl(wx.ListCtrl, listmix.TextEditMixin,listmix.ListCtrlAutoWidthMixin):
-
+    """
+    This needs to be replaced with Grid.VGrid in Invoice and Invoice View
+    """
     def __init__(self, parent, ID=wx.ID_ANY, pos=wx.DefaultPosition,
-                 size=wx.DefaultSize, style=0, currencyformat=locale.currency):
+                 size=wx.DefaultSize, style=0):
         wx.ListCtrl.__init__(self, parent, ID, pos, size, style)
         listmix.TextEditMixin.__init__(self)
         listmix.ListCtrlAutoWidthMixin.__init__(self)
@@ -28,8 +32,6 @@ class EditableListCtrl(wx.ListCtrl, listmix.TextEditMixin,listmix.ListCtrlAutoWi
         self.rowEditable = {}
         self.itemFloat = []
         self.itemInt = []
-
-        self.currencyformat = currencyformat
 
         self.Bind(wx.EVT_CONTEXT_MENU, self.OnContextMenu)
 
@@ -161,7 +163,7 @@ class EditableListCtrl(wx.ListCtrl, listmix.TextEditMixin,listmix.ListCtrlAutoWi
         if self.columnTypes[col] == LIST_COL_TYPE_NUMBER:
             valueFormated = '%g' % value
         if self.columnTypes[col] == LIST_COL_TYPE_CURRENCY:
-            valueFormated = self.currencyformat( value) #'Rf {0}'.format(round(value, 2))
+            valueFormated = Format.Currency( value) #'Rf {0}'.format(round(value, 2))
         if self.columnTypes[col] == LIST_COL_TYPE_PERCENT:
             valueFormated = ('%g' % value) + '%'
 

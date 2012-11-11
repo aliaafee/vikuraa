@@ -7,7 +7,6 @@ from mx import DateTime
 from MainFrame import MainFrame
 from Database import Db
 from SessionManager import SessionManager
-#from ReciptPrinter import Epson, Printer
 
 
 class Peripherals(object):
@@ -29,16 +28,16 @@ class Vikuraa(wx.App):
         return True
 
 
-
 def start(dbconnectionstring):
     db = Db(dbconnectionstring)
 
     session = SessionManager(db)
 
     peripherals = Peripherals
-    
+
     from ReciptPrinter import ReciptPrinter
     peripherals.ReciptPrinter = ReciptPrinter
+
     #from EpsonEscPos import EpsonEscPos
     #peripherals.ReciptPrinter = EpsonEscPos
 
@@ -84,6 +83,7 @@ def main(argv):
     if log == '':
         start(uri)
     else:
+        "Log all errors to log file"
         import logging
         logging.basicConfig(level=logging.DEBUG, filename=log)
         try:

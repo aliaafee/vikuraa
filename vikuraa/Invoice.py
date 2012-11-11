@@ -36,7 +36,6 @@ class Invoice(wx.Panel):
     def _GlueEventCallbacks(self):
         logic = self.Logic
         if logic != None:
-            self.CurrencyFormat = logic.CurrencyFormat
             self.OnSearch = logic.OnSearch
             self.UpdateItemId = logic.UpdateItemId
             self.UpdateBarcode = logic.UpdateBarcode
@@ -94,7 +93,7 @@ class Invoice(wx.Panel):
 
     def _InitList(self):
         listctrl = ListCtrl.EditableListCtrl(self,
-                style = wx.LC_REPORT, currencyformat=self.CurrencyFormat)
+                style = wx.LC_REPORT)
 
         editable=True
 
@@ -220,8 +219,7 @@ class Invoice(wx.Panel):
 
 
     def ShowPaymentDialog(self, paymentMethods, invoiceTotal, invoiceTaxTotal):
-        dlg = PaymentDialog(self, paymentMethods, invoiceTotal,
-                                invoiceTaxTotal, self.CurrencyFormat)
+        dlg = PaymentDialog(self, paymentMethods, invoiceTotal, invoiceTaxTotal)
 
         result = dlg.ShowModal()
 
