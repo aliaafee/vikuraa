@@ -222,6 +222,11 @@ class PurchaseLogic(object):
                         where=(self.db.Purchase.q.id == purchase.id))
             query = self.db.connection.sqlrepr(update)
             self.db.connection.query(query)
+            if item.stockStart == 0 and item.stockIn == 0 and item.stockOut == 0:
+                update = sqlb.Delete('item',
+                        where=(self.db.Item.q.id == item.id))
+                query = self.db.connection.sqlrepr(update)
+                self.db.connection.query(query)
 
 
 
