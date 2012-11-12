@@ -32,7 +32,6 @@ class Purchase(wx.Panel):
     def _GlueEventCallbacks(self):
         logic = self.Logic
 
-        self.CurrencyFormat = logic.CurrencyFormat
         self.OnBack = logic.OnBack
         #self.OnPurchaseBillId = None
         self.OnForward = logic.OnForward

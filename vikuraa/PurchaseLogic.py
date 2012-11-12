@@ -1,5 +1,5 @@
 from mx import DateTime
-import Formats
+import Format
 import sqlobject.sqlbuilder as sqlb
 import sqlobject
 #import TextTable as tb
@@ -32,7 +32,6 @@ class PurchaseLogic(object):
     HideNavBar = None
     PurchaseBillIdError = None
 
-    CurrencyFormat = Formats.CurrencyFormat
 
     def __init__(self, db, session, peripherals):
         self.db = db
