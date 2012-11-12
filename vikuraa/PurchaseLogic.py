@@ -350,6 +350,7 @@ class PurchaseLogic(object):
                 self.SetListValue(row, self.COL_ITEM_SELLING, item.selling)
                 self.SetForExistingItem(row)
         else:
+            #If item select check whether any item is using the entered barcode
             query = self.db.Item.select(self.db.Item.q.bcode == code)
             if query.count() > 0:
                 item = query[0]
@@ -357,6 +358,3 @@ class PurchaseLogic(object):
                     print "Another item with same bcode exists"
                     item = self.db.Item.get(itemid)
                     self.SetListValue(row, self.COL_ITEM_BCODE, item.bcode)
-
-
-
