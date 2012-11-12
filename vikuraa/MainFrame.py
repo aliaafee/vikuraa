@@ -17,7 +17,6 @@ import sys
 
 class MainFrame(wx.Frame):
     _InvoiceCount = 0
-    _PurcahseCount = 0
 
     def __init__(self, parent, db, session, peripherals):
         wx.Frame.__init__(
@@ -204,6 +203,13 @@ class MainFrame(wx.Frame):
         event.Skip()
 
 
+    def _AddPage(self, pnl, title, iconfile):
+        self.plMain.AddPage(pnl, title)
+        pageid = self.plMain.GetPageIndex(pnl)
+        self.plMain.SetPageBitmap(pageid, wx.Bitmap(Resource.GetFileName(iconfile)))
+        self.plMain.SetSelection(pageid)
+
+
     def OnNewInvoice(self, event):
         #if not self.session.HasPermission('NEWINVOICE'):
         #    return
@@ -212,47 +218,26 @@ class MainFrame(wx.Frame):
 
         invoice = Invoice(self.plMain, InvoiceLogic(self.db, self.session, self.peripherals))
 
-        self.plMain.AddPage(invoice,
-                            "New Sale {0}".format(self._InvoiceCount))
-
-        invoiceId = self.plMain.GetPageIndex(invoice)
-
-        self.plMain.SetPageBitmap(invoiceId,
-                    wx.Bitmap(Resource.GetFileName('invoice-new-sml.png')))
-        self.plMain.SetSelection(invoiceId)
+        self._AddPage(
+            invoice,
+            'New Sale {0}'.format(self._InvoiceCount),
+            'invoice-new-sml.png'
+        )
 
         invoice.tcCode.SetFocus()
 
-        #event.Skip()
-
 
     def OnViewInvoice(self, event):
-        invoice = InvoiceView(self.plMain, InvoiceViewLogic(self.db, self.session, self.peripherals))
-
-        self.plMain.AddPage(invoice,
-                            "Invoice Viewer".format(self._InvoiceCount))
-
-        invoiceId = self.plMain.GetPageIndex(invoice)
-
-        self.plMain.SetPageBitmap(invoiceId,
-                    wx.Bitmap(Resource.GetFileName('invoice-view-sml.png')))
-        self.plMain.SetSelection(invoiceId)
-
-        #event.Skip()
+        self._AddPage(
+            InvoiceView(self.plMain, InvoiceViewLogic(self.db, self.session, self.peripherals)),
+            'Invoice Viewer',
+            'invoice-view-sml.png')
 
 
     def OnPurchase(self, event):
-        self._PurcahseCount += 1
-
-        purchase = Purchase(self.plMain, PurchaseLogic(self.db, self.session, self.peripherals))
-
-        self.plMain.AddPage(purchase,
-                            "Purchase Bills".format(self._PurcahseCount))
-
-        purchaseId = self.plMain.GetPageIndex(purchase)
-
-        self.plMain.SetPageBitmap(purchaseId,
-                    wx.Bitmap("res/purchase-bill-sml.png"))
-        self.plMain.SetSelection(purchaseId)
+       self._AddPage(
+            Purchase(self.plMain, PurchaseLogic(self.db, self.session, self.peripherals)),
+            'Purchase Bills',
+            'purchase-bill-sml.png')
 
 
