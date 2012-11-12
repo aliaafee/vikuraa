@@ -130,14 +130,15 @@ class MainFrame(wx.Frame):
                         wx.MessageBox('Invalid Username/Password', 'Login Error',
                                             wx.OK | wx.ICON_ERROR)
                 else:
-                    sys.exit()
-                    #pass
-                    #help(self)
+                    self.Close()
+                    break
 
 
     def OnLogOut(self, event):
         if not self.IsSaved():
-            dlg = wx.MessageDialog(None, 'There is some unsaved data. Are you sure you want to logout without saving?', 'Unsaved data',
+            dlg = wx.MessageDialog(None,
+                'There is some unsaved data. Are you sure you want to logout without saving?',
+                'Unsaved data',
                 wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION)
 
             result = dlg.ShowModal()
