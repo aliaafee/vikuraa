@@ -21,7 +21,7 @@ class InvoiceViewLogic(InvoiceLogic):
 
     invoice = None
 
-    def DisplayLast(self):
+    def Start(self):
         try:
             query = self.db.Invoice.select()
             last = query[-1]
@@ -99,10 +99,7 @@ class InvoiceViewLogic(InvoiceLogic):
 class InvoiceView(Invoice):
     def __init__(self, parent, title, logic):
         Invoice.__init__(self, parent, title, logic)
-        
         self.icon = wx.Bitmap(Resource.GetFileName('invoice-view-sml.png'))
-        
-        self.Logic.DisplayLast()
 
 
     def GlueCallBack(self):

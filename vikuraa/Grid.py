@@ -232,7 +232,7 @@ class VGrid(gridlib.Grid):
         self._CellData = []
         self._Columns = columns
         self._SetupColumns()
-        self.SetRowLabelSize(30)
+        self.SetRowLabelSize(0)
         self._BottomOffset = 0
         self._SetupSumRow()
         self.Bind(gridlib.EVT_GRID_CMD_CELL_CHANGE, self._OnCellChange)

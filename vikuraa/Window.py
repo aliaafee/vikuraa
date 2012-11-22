@@ -13,6 +13,8 @@ class VWindow(wx.Panel):
         self.InitControls()
         self.GlueLogic()
 
+        self.Logic.Start()
+
 
     def AddToAuiNotebook(self, notebook):
         notebook.AddPage(self, self.title)

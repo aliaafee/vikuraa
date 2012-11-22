@@ -52,6 +52,10 @@ class InvoiceLogic(object):
         self.peripherals = peripherals
 
 
+    def Start(self):
+        pass
+
+
     def AddItem(self, code, byitemid=False):
         if byitemid:
             try:

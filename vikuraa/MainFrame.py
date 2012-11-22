@@ -11,11 +11,9 @@ from PurchaseLogic import PurchaseLogic
 
 from LoginPrompt import LoginPrompt
 
-from Window import VWindow
-
 import Resource
 
-import sys
+
 
 class MainFrame(wx.Frame):
     _InvoiceCount = 0
@@ -235,9 +233,11 @@ class MainFrame(wx.Frame):
 
 
     def OnPurchase(self, event):
-       self._AddPage(
-            Purchase(self.plMain, PurchaseLogic(self.db, self.session, self.peripherals)),
-            'Purchase Bills',
-            'purchase-bill-sml.png')
+        window = Purchase(
+                self.plMain,
+                'Purchases',
+                PurchaseLogic(self.db, self.session, self.peripherals))
+
+        window.AddToAuiNotebook(self.plMain)
 
 

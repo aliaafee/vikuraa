@@ -1,33 +1,19 @@
 import wx
 
-from wxHelpers import *
-from DateTimePickerCtrl import DateTimePickerCtrl
-from DbComboBox import DbComboBox
+import Resource
+from Window import VWindow
 from Grid import *
 
-import Resource
-import Format
+from DateTimePickerCtrl import DateTimePickerCtrl
+from DbComboBox import DbComboBox
 
-class Purchase(wx.Panel):
-    Logic = None
-
-    def __init__(self, parent, logic):
-        wx.Panel.__init__(self, parent)
-
-        self.Logic = logic
-
-        self._GlueEventCallbacks()
-
-        self._InitCtrls()
-
-        self._GlueLogic()
-
-        self.Logic.Start()
-        self.cbSuppliers.SetSelection(0)
-        self.cbTaxCategory.SetSelection(0)
+class Purchase(VWindow):
+    def __init__(self, parent, title, logic):
+        VWindow.__init__(self, parent, title, logic)
+        self.icon = wx.Bitmap(Resource.GetFileName('purchase-bill-sml.png'))
 
 
-    def _GlueEventCallbacks(self):
+    def GlueCallBack(self):
         logic = self.Logic
 
         self.OnBack = logic.OnBack
@@ -40,9 +26,8 @@ class Purchase(wx.Panel):
         self.OnSave = logic.Save
         self.GoToPurchaseBill = logic.GoToPurchaseBill
 
-        return
 
-    def _GlueLogic(self):
+    def GlueLogic(self):
         logic = self.Logic
 
         logic.GetPurchaseBillId = self.tcPurchaseBillId.GetValue
@@ -66,7 +51,7 @@ class Purchase(wx.Panel):
         logic.PurchaseBillIdError = self.PurchaseBillIdError
 
 
-    def _InitToolBar(self):
+    def InitToolbar(self):
         toolbar = wx.ToolBar(self)#, style=wx.TB_NODIVIDER)
 
         tbBack = toolbar.AddLabelTool(
@@ -84,12 +69,6 @@ class Purchase(wx.Panel):
 
         toolbar.AddSeparator()
 
-        toolbar.Realize()
-
-        self.tbNavigation = toolbar
-
-        toolbar = wx.ToolBar(self)#, style=wx.TB_NODIVIDER)
-
         tbSave = toolbar.AddLabelTool(wx.ID_ANY, 'Save', wx.Bitmap(Resource.GetFileName('save.png')))
         self.Bind(wx.EVT_TOOL, self.OnSave, tbSave)
         tbAddRow = toolbar.AddLabelTool(wx.ID_ANY, 'Add Row', wx.Bitmap(Resource.GetFileName('add-row.png')))
@@ -101,13 +80,10 @@ class Purchase(wx.Panel):
 
         toolbar.Realize()
 
-        sizer = wx.BoxSizer(wx.HORIZONTAL)
-        sizer.Add(self.tbNavigation,0,wx.ALL,0)
-        sizer.Add(toolbar,1, wx.ALL|wx.EXPAND, 0)
+        self.toolbar = toolbar
 
-        return sizer
 
-    def _InitList(self):
+    def InitList(self):
         listctrl = VGrid(self, columns=
                 {
                     self.Logic.COL_ID : VGridIntCol('PurchId', ReadOnly=True, Hidden=True),
@@ -126,12 +102,7 @@ class Purchase(wx.Panel):
         return listctrl
 
 
-    def _InitCtrls(self):
-        topsizer = wx.BoxSizer(wx.VERTICAL)
-
-        tb = self._InitToolBar()
-        topsizer.Add(tb,0, wx.ALL| wx.EXPAND,0)
-
+    def InitControls(self):
         stDate = wx.StaticText(self, label="Date")
         self.tcDate = DateTimePickerCtrl(self, showtime=False)
 
@@ -141,35 +112,18 @@ class Purchase(wx.Panel):
         stTaxCategory = wx.StaticText(self, label="Tax Category")
         self.cbTaxCategory = DbComboBox(self)
 
-        #stTaxCategory2 = wx.StaticText(self, label="Tax Category")
-        #self.cbTaxCategory2 = wx.ComboBox(self, 501,
-        #        style= wx.CB_DROPDOWN, size = wx.Size(200,-1))
+        self.list = self.InitList()
 
-        gridl = wx.FlexGridSizer(3,2)
-        gridl.AddGrowableCol(1)
+        gridl, gridr, top = self.Layout2()
 
-        gridl.Add(stDate, 0, wx.ALL, 5)
-        gridl.Add(self.tcDate, 0, wx.ALL| wx.EXPAND, 5)
-        gridl.Add(stSuppliers, 0, wx.ALL, 5)
-        gridl.Add(self.cbSuppliers, 0, wx.ALL| wx.EXPAND, 5)
-        gridl.Add(stTaxCategory, 0, wx.ALL| wx.EXPAND, 5)
-        gridl.Add(self.cbTaxCategory, 0, wx.ALL| wx.EXPAND, 5)
-
-        gridr = wx.FlexGridSizer(3,2)
-        gridr.AddGrowableCol(1)
-        #gridr.Add(stTaxCategory2, 0, wx.ALL| wx.EXPAND, 5)
-        #gridr.Add(self.cbTaxCategory2, 0, wx.ALL| wx.EXPAND, 5)
-
-        hbox = wx.BoxSizer(wx.HORIZONTAL)
-        hbox.Add(gridl, 1, wx.ALL| wx.EXPAND)
-        hbox.Add(gridr, 1, wx.ALL| wx.EXPAND)
-
-        topsizer.Add(hbox,0, wx.ALL| wx.EXPAND,0)
-
-        self.list = self._InitList()
-        topsizer.Add(self.list, 1, wx.ALL| wx.EXPAND, 5)
-
-        self.SetSizer(topsizer)
+        gridl.Add(stDate, 0, wx.ALL, 3)
+        gridl.Add(self.tcDate, 0, wx.ALL| wx.EXPAND, 3)
+        gridl.Add(stSuppliers, 0, wx.ALL, 3)
+        gridl.Add(self.cbSuppliers, 0, wx.ALL| wx.EXPAND, 3)
+        gridl.Add(stTaxCategory, 0, wx.ALL, 3)
+        gridl.Add(self.cbTaxCategory, 0, wx.ALL| wx.EXPAND, 3)
+        top.Add(self.list, 1, wx.ALL|wx.EXPAND, 3)
+        
 
     def OnPurchaseBillId(self, event):
         kcode = event.GetKeyCode()
@@ -181,19 +135,14 @@ class Purchase(wx.Panel):
     def OnAddRow(self, event):
         self.list.AppendRow()
 
-    def IsSaved(self):
-        return True
-
+        
     def PurchaseBillIdError(self):
         print "cannot find the entered bill"
+        
 
+    def DefaultFocus(self):
+        pass
+        
 
-
-
-
-
-
-
-
-
-
+    def IsSaved(self):
+        return True
