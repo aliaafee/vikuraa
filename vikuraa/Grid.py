@@ -235,7 +235,7 @@ class VGrid(gridlib.Grid):
         self.SetRowLabelSize(30)
         self._BottomOffset = 0
         self._SetupSumRow()
-        self.Bind(gridlib.EVT_GRID_CMD_CELL_CHANGED, self._OnCellChange)
+        self.Bind(gridlib.EVT_GRID_CMD_CELL_CHANGE, self._OnCellChange)
         self._ResizeCol = None
         self.Bind(wx.EVT_SIZE, self._OnResize)
         self.Bind(gridlib.EVT_GRID_COL_SIZE, self._OnResize)
@@ -243,10 +243,12 @@ class VGrid(gridlib.Grid):
 
     def _OnResize(self, event):
         if 'gtk2' in wx.PlatformInfo:
-            self._DoResize()
+            wx.CallAfter(self._DoResize)
+            self.Refresh()
         else:
             self._DoResize()
         event.Skip()
+        
 
     def _DoResize(self):
         if self._ResizeCol != None:
@@ -291,13 +293,15 @@ class VGrid(gridlib.Grid):
         for key in sorted(self._Columns.iterkeys()):
             self.SetColLabelValue(key, self._Columns[key].Label)
             if self._Columns[key].Hidden:
+                self.SetColMinimalWidth(key, 0)
+                self.SetColMinimalAcceptableWidth(0)
                 self.SetColSize(key, 0)
 
 
     def _SetupRow(self, row):
         for key in self._Columns.iterkeys():
             self._SetupCell(row, key)
-
+        
 
     def _SetupCell(self, row, col):
         if self._Columns[col].Renderer != None:
