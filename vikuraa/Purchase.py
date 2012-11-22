@@ -1,7 +1,6 @@
 import wx
 
 from wxHelpers import *
-import EditableListCtrl as ListCtrl
 from DateTimePickerCtrl import DateTimePickerCtrl
 from DbComboBox import DbComboBox
 from Grid import *
