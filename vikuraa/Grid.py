@@ -423,11 +423,12 @@ class VGrid(gridlib.Grid):
         return result
 
 
-    def SearchCol(self, col, value):
+    def SearchCol(self, col, value, skiprow=None):
         "Return first row with given value in given column"
         for row in range(self.GetRowCount()):
-            if value == self.GetCellValue(row, col):
-                return row
+            if row != skiprow:
+                if value == self.GetCellValue(row, col):
+                    return row
         return None
 
     def HasItems(self):

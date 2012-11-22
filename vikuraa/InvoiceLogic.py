@@ -125,18 +125,17 @@ class InvoiceLogic(object):
 
 
     def UpdateItemId(self, row, col, value, prev_value):
-        return False
+        self.SetListValue(row, col, prev_value)
 
 
     def UpdateBarcode(self, row, col, value, prev_value):
-        twinrow = self.GetRowWith(self.COL_BCODE, value)
+        twinrow = self.GetRowWith(self.COL_BCODE, value, row)
         if twinrow != None:
             if twinrow != row:
-                qty = self.GetListValue(twinrow, self.COL_QTY)
-                qty += 1
+                qty = self.GetListValue(twinrow, self.COL_QTY) + self.GetListValue(row, self.COL_QTY)
                 self.SetListValue(twinrow, self.COL_QTY, qty)
-                self.DeleteRow(row)
                 self.UpdateRow(twinrow)
+                self.DeleteRow(row)
                 return True
 
         try:
