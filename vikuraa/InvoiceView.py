@@ -99,7 +99,9 @@ class InvoiceViewLogic(InvoiceLogic):
 class InvoiceView(Invoice):
     def __init__(self, parent, title, logic):
         Invoice.__init__(self, parent, title, logic)
-
+        
+        self.icon = wx.Bitmap(Resource.GetFileName('invoice-view-sml.png'))
+        
         self.Logic.DisplayLast()
 
 
@@ -134,7 +136,7 @@ class InvoiceView(Invoice):
 
 
     def DefaultFocus(self):
-        pass
+        self.tcInvoiceId.SetFocus()
 
 
     def IsSaved(self):
