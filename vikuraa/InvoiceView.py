@@ -1,10 +1,10 @@
 import wx
 
-from wxHelpers import *
+import sqlobject
 
 from Invoice import Invoice
 from InvoiceLogic import InvoiceLogic
-import sqlobject
+from DateTimePickerCtrl import DateTimePickerCtrl
 
 import Resource
 import Format
@@ -96,38 +96,30 @@ class InvoiceViewLogic(InvoiceLogic):
 
 
 
-
 class InvoiceView(Invoice):
-    def __init__(self, parent, logic):
-        wx.Panel.__init__(self, parent)
-
-        self.Logic = logic
-
-        self._GlueEventCallbacks()
-
-        sizer = self._InitCtrls(readonly=True)
-        sizer = self._InitViewCtrls(sizer)
-
-        self.SetSizer(sizer)
-
-        self._GlueLogic()
+    def __init__(self, parent, title, logic):
+        Invoice.__init__(self, parent, title, logic)
 
         self.Logic.DisplayLast()
 
 
-    def _GlueEventCallbacks(self):
+    def GlueCallBack(self):
         logic = self.Logic
 
         self.OnBack = logic.OnBack
         self.OnForward = logic.OnForward
         self.OnPrint = logic.OnPrint
         self.OnGotoInvoice = logic.GoToInvoice
+        self.UpdateItemId = None
+        self.UpdateBarcode = None
+        self.UpdateQty = None
 
 
-    def _GlueLogic(self):
-        Invoice._GlueLogic(self)
+    def GlueLogic(self):
         logic = self.Logic
 
+        logic.SetTotal = self.tcTotal.SetValue
+        logic.SetTax = self.tcTax.SetValue
         logic.SetInvoiceId = self.tcInvoiceId.SetValue
         logic.SetDate = self.tcDate.SetValue
         logic.SetPaymentMethod = self.tcPaymentMethod.SetValue
@@ -138,8 +130,18 @@ class InvoiceView(Invoice):
         logic.SetShowCash = self.ShowCash
         logic.InvoiceIdError = self.InvoiceIdError
 
+        self.GlueListLogic()
 
-    def _InitToolBar(self):
+
+    def DefaultFocus(self):
+        pass
+
+
+    def IsSaved(self):
+        return True
+
+
+    def InitToolbar(self):
         toolbar = wx.ToolBar(self)#, style=wx.TB_NODIVIDER)
 
         tbBack = toolbar.AddLabelTool(
@@ -161,59 +163,41 @@ class InvoiceView(Invoice):
 
         toolbar.Realize()
 
-        return toolbar
+        self.toolbar = toolbar
 
 
-    def _InitViewCtrls(self, mainsizer):
-        topsizer = wx.BoxSizer(wx.VERTICAL)
+    def InitControls(self):
+        gridl, gridr, top = self.Layout2()
 
-        self.list.HideColumn(self.Logic.COL_AVAILABLE)
+        self.list = self.InitList(True)
 
-        tb = self._InitToolBar()
-        topsizer.Add(tb,0, wx.ALL| wx.EXPAND,0)
+        top.Add(self.list, 1, wx.ALL|wx.EXPAND, 3)
 
-        #self.tcDate, sizer = LabeledCtrl(self, 'Date', wx.ALIGN_LEFT, wx.Size(-1,-1), False)
-        #rsizer.Add(sizer, 0, wx.ALL| wx.EXPAND, 2)
+        stDate = wx.StaticText(self,label = 'Date')
+        self.tcDate = DateTimePickerCtrl(self)
 
-        #self.tcInvoiceId, sizer = LabeledCtrl(self, 'Invoice Id')
-        #rsizer.Add(sizer, 0, wx.ALL| wx.EXPAND, 2)
+        stAddress = wx.StaticText(self,label = 'Address')
+        self.tcAddress = wx.TextCtrl(self)
 
-        #self.tcInvoiceId.Bind(wx.EVT_KEY_UP, self.OnInvoiceId)
+        gridl.Add(stDate, 0, wx.ALL, 3)
+        gridl.Add(self.tcDate, 0, wx.ALL|wx.EXPAND, 3)
+        gridl.Add(stAddress, 0, wx.ALL, 3)
+        gridl.Add(self.tcAddress, 0, wx.ALL|wx.EXPAND, 3)
 
-        lsizer = wx.BoxSizer(wx.VERTICAL)
 
-        self.tcTotal, sizer = LabeledCtrl(self, 'Total',
-                                        wx.ALIGN_LEFT, wx.Size(-1,-1), False)
-        lsizer.Add(sizer, 0, wx.EXPAND | wx.ALL, 0)
+        self.tcTotal,self.tcTax,self.tcPaymentMethod,self.tcApprovalCode,self.tcTendered,self.tcBalance = self.LabeledTextCtrls(
+            gridr,
+            ['Total', 'Incl 6% GST', 'Payment Method','Approval Code', 'Tendered', 'Balance'],
+            wx.TE_RIGHT | wx.ALIGN_RIGHT)
 
-        self.tcTax, sizer = LabeledCtrl(self, 'Incl 6% GST',
-                                        wx.ALIGN_LEFT, wx.Size(-1,-1), False)
-        lsizer.Add(sizer, 0, wx.EXPAND | wx.ALL, 0)
 
-        self.tcPaymentMethod, sizer = LabeledCtrl(self, 'Payment Method',
-                                        wx.ALIGN_LEFT, wx.Size(-1,-1), False)
-        lsizer.Add(sizer, 0, wx.EXPAND | wx.ALL, 0)
-
-        self.tcApprovalCode, sizer = LabeledCtrl(self, 'Approval Code',
-                                        wx.ALIGN_LEFT, wx.Size(-1,-1), False)
-        lsizer.Add(sizer, 0, wx.EXPAND | wx.ALL, 0)
-
-        self.tcTendered, sizer = LabeledCtrl(self, 'Tendered',
-                                        wx.ALIGN_LEFT, wx.Size(-1,-1), False)
-        self.tcTendered.SetWindowStyleFlag(wx.TE_RIGHT | wx.ALIGN_RIGHT)
-        lsizer.Add(sizer, 0, wx.EXPAND | wx.ALL, 0)
-
-        self.tcBalance, sizer = LabeledCtrl(self, 'Balance',
-                                        wx.ALIGN_LEFT, wx.Size(-1,-1), False)
-        self.tcBalance.SetWindowStyleFlag(wx.TE_RIGHT | wx.ALIGN_RIGHT)
-        lsizer.Add(sizer, 0, wx.EXPAND | wx.ALL, 0)
-        self.UpdateDisplay = None
-
-        mainsizer.Add(lsizer, (0,2), (3,2), wx.ALL | wx.EXPAND, 5)
-
-        topsizer.Add(mainsizer,1,wx.ALL|wx.EXPAND,0)
-
-        return topsizer
+    def OnInvoiceId(self, event):
+        kcode = event.GetKeyCode()
+        if kcode == wx.WXK_RETURN or kcode == 370:
+            invoiceId = self.tcInvoiceId.GetValue()
+            #print invoiceId
+            self.OnGotoInvoice(invoiceId)
+            event.GetEventObject().SetFocus()
 
 
     def OnInvoiceId(self, event):
@@ -240,6 +224,7 @@ class InvoiceView(Invoice):
         self.tcPaymentMethod.label.Show()
         self.Layout()
 
+
     def ShowCash(self):
         self.tcBalance.Show()
         self.tcTendered.Show()
@@ -250,19 +235,3 @@ class InvoiceView(Invoice):
         self.tcApprovalCode.label.Hide()
         self.tcPaymentMethod.label.Hide()
         self.Layout()
-
-
-    def IsSaved(self):
-        return True
-
-
-if __name__ == "__main__":
-    app = wx.App()
-    frame = wx.Frame(None)
-    logic = InvoiceViewLogic(None, None, None)
-    pnl = InvoiceView(frame, logic)
-    sz = wx.BoxSizer()
-    sz.Add(pnl,1,wx.ALL|wx.EXPAND,0)
-    frame.SetSizer(sz)
-    frame.Show()
-    app.MainLoop()

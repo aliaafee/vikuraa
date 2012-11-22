@@ -11,6 +11,8 @@ from PurchaseLogic import PurchaseLogic
 
 from LoginPrompt import LoginPrompt
 
+from Window import VWindow
+
 import Resource
 
 import sys
@@ -213,25 +215,23 @@ class MainFrame(wx.Frame):
     def OnNewInvoice(self, event):
         #if not self.session.HasPermission('NEWINVOICE'):
         #    return
-
         self._InvoiceCount += 1
 
-        invoice = Invoice(self.plMain, InvoiceLogic(self.db, self.session, self.peripherals))
+        window = Invoice(
+                self.plMain,
+                'New Sale {0}'.format(self._InvoiceCount),
+                InvoiceLogic(self.db, self.session, self.peripherals))
 
-        self._AddPage(
-            invoice,
-            'New Sale {0}'.format(self._InvoiceCount),
-            'invoice-new-sml.png'
-        )
-
-        invoice.tcCode.SetFocus()
+        window.AddToAuiNotebook(self.plMain)
 
 
     def OnViewInvoice(self, event):
-        self._AddPage(
-            InvoiceView(self.plMain, InvoiceViewLogic(self.db, self.session, self.peripherals)),
-            'Invoice Viewer',
-            'invoice-view-sml.png')
+        window = InvoiceView(
+                self.plMain,
+                'View Sales',
+                InvoiceViewLogic(self.db, self.session, self.peripherals))
+
+        window.AddToAuiNotebook(self.plMain)
 
 
     def OnPurchase(self, event):

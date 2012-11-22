@@ -262,25 +262,25 @@ class VGrid(gridlib.Grid):
             else:
                 self.SetColSize(self._ResizeCol, resizeColMinWidth)
 
+
     def _OnCellChange(self, event):
         print event.GetRow(), event.GetCol()
         row = event.GetRow()
         col = event.GetCol()
         valuestr = gridlib.Grid.GetCellValue(self, row, col)
+        prev_value = self.GetCellValue(row, col)
         try:
             value = self._Columns[col].StringToValue(valuestr)
         except ValueError:
             gridlib.Grid.SetCellValue(self,
                     row, col,
-                    self._Columns[col].ValueToString(self.GetCellValue(row, col)))
+                    self._Columns[col].ValueToString(prev_value))
             event.Skip()
         else:
             self.SetCellValue(row, col, value)
+
             if self._Columns[col].EditDoneCallback != None:
-                wx.CallAfter(self._Columns[col].EditDoneCallback, row, col, value)
-
-
-
+                wx.CallAfter(self._Columns[col].EditDoneCallback,row, col, value, prev_value)
 
 
     def _SetupColumns(self):
@@ -347,7 +347,14 @@ class VGrid(gridlib.Grid):
                     gridlib.Grid.SetCellValue(self, rowcount - 1, col, self._Columns[col].ValueToString(sumvalue))
 
 
-    def AppendRow(self):
+    def GetColumnSum(self, col):
+        sumvalue = self._Columns[col].Default
+        for row in range(self.GetRowCount()):
+            sumvalue += self.GetCellValue(row, col)
+        return sumvalue
+
+
+    def AppendRow(self, values=None):
         gridlib.Grid.InsertRows(self, self.GetNumberRows() - self._BottomOffset)
         if self._BottomOffset == 0:
             self._CellData.append([0 for i in range(len(self._Columns))])
@@ -357,6 +364,10 @@ class VGrid(gridlib.Grid):
 
         row = self.GetNumberRows() - 1 - self._BottomOffset
         self._SetupRow(row)
+
+        if values != None:
+            self.SetRow(row, values)
+
         return row
 
 
@@ -381,6 +392,11 @@ class VGrid(gridlib.Grid):
         return False
 
 
+    def DeleteRow(self, row):
+        self.DeleteRows(row, 1)
+        del(self._CellData[row])
+
+
     def DeleteAllRows(self):
         rows = self.GetNumberRows()
         if rows > 0:
@@ -393,6 +409,27 @@ class VGrid(gridlib.Grid):
 
     def SetResizeCol(self, col):
         self._ResizeCol = col
+
+    def GetAll(self, cols):
+        result = []
+        for row in range(self.GetRowCount()):
+            result.append({})
+            for col in cols:
+                result[row][col] = self.GetCellValue(row, col)
+        return result
+
+
+    def SearchCol(self, col, value):
+        "Return first row with given value in given column"
+        for row in range(self.GetRowCount()):
+            if value == self.GetCellValue(row, col):
+                return row
+        return None
+
+    def HasItems(self):
+        if self.GetRowCount > 0:
+            return True
+        return False
 
 
 

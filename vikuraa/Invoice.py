@@ -1,221 +1,136 @@
 import wx
 
-import EditableListCtrl as ListCtrl
-from PaymentDialog import PaymentDialog
-from NumberDisplay import NumberDisplay
-from wxHelpers import *
-from DateTimePickerCtrl import DateTimePickerCtrl
 import Resource
+from Window import VWindow
+from Grid import *
+
+from DateTimePickerCtrl import DateTimePickerCtrl
+from NumberDisplay import NumberDisplay
+from PaymentDialog import PaymentDialog
+
+class Invoice(VWindow):
+    def __init__(self, parent, title, logic):
+        VWindow.__init__(self, parent, title, logic)
+        self.icon = wx.Bitmap(Resource.GetFileName('invoice-new-sml.png'))
 
 
-class Invoice(wx.Panel):
-    Logic = None
-
-    OnSearch = None
-    UpdateItemId = None
-    UpdateBarcode = None
-    UpdateRow = None
-    CurrencyFormat = None
-
-    def __init__(self, parent, logic):
-        wx.Panel.__init__(self, parent)
-
-        self.Logic = logic
-
-        self._GlueEventCallbacks()
-
-        sizer = self._InitCtrls()
-
-        self.SetSizer(sizer)
-
-        self._GlueLogic()
-
-        self.Bind(wx.EVT_CLOSE, self.OnClose)
-
-
-    def _GlueEventCallbacks(self):
+    def GlueCallBack(self):
         logic = self.Logic
-        if logic != None:
-            self.OnSearch = logic.OnSearch
-            self.UpdateItemId = logic.UpdateItemId
-            self.UpdateBarcode = logic.UpdateBarcode
-            self.UpdateRow = logic.UpdateRow
+
+        self.OnSearch = logic.OnSearch
+        self.UpdateItemId = logic.UpdateItemId
+        self.UpdateBarcode = logic.UpdateBarcode
+        self.UpdateQty = logic.UpdateQty
 
 
-    def _GlueLogic(self):
+    def GlueLogic(self):
         logic = self.Logic
 
         logic.GetAddress = self.tcAddress.GetValue
         logic.SetAddress = self.tcAddress.SetValue
-        try:
-            logic.GetEnteredCode = self.tcCode.GetValue
-            logic.SetEnteredCode = self.tcCode.SetValue
-            logic.GetEnteredQty = self.tcQty.GetValue
-            logic.SetEnteredQty = self.tcQty.SetValue
-        except:
-            pass
-        logic.GetAllItems = self.list.GetAll
-        logic.GetItemFloat = self.list.GetItemFloat
-        logic.GetItemString = self.list.GetItemText
-        logic.SetItemFloat = self.list.SetFloatItem
-        logic.SetItemString = self.list.SetStringItem
-        logic.GetColSum = self.list.GetColumnSum
-        logic.GetRowWith = self.list.HasEntry
-        logic.InsertRow = self.list.AddRow
-        logic.SetRow = self.list.SetRow
         logic.SetTotal = self.SetTotal
         logic.SetTax = self.SetTax
         logic.DisableUI = self.Disable
         logic.EnableUI = self.Enable
-        logic.HasItems = self.list.HasItems
-        logic.ClearItems = self.list.DeleteAllItems
         logic.GetPayment = self.ShowPaymentDialog
-        logic.DeleteRow = self.list.DeleteItem
+        logic.GetEnteredCode = self.tcCode.GetValue
+        logic.SetEnteredCode = self.tcCode.SetValue
+        logic.GetEnteredQty = self.tcQty.GetValue
+        logic.SetEnteredQty = self.tcQty.SetValue
+
+        self.GlueListLogic()
 
 
-    def SetTotal(self, text):
-        try:
-            self.tcTotal.SetLabel(text)
-            if self.UpdateDisplay != None:
-                self.UpdateDisplay()
-        except:
-            self.tcTotal.SetValue(text)
+    def GlueListLogic(self):
+        logic = self.Logic
+
+        logic.GetAllItems = self.list.GetAll
+        logic.GetListValue = self.list.GetCellValue
+        logic.SetListValue = self.list.SetCellValue
+        logic.GetColSum = self.list.GetColumnSum
+        logic.GetRowWith = self.list.SearchCol
+        logic.InsertRow = self.list.AppendRow
+        logic.SetRow = self.list.SetRow
+        logic.HasItems = self.list.HasItems
+        logic.ClearItems = self.list.DeleteAllRows
+        logic.DeleteRow = self.list.DeleteRow
 
 
-    def SetTax(self, text):
-        try:
-            self.tcTax.SetLabel(text)
-            if self.UpdateDisplay != None:
-                self.UpdateDisplay()
-        except:
-            self.tcTax.SetValue(text)
-
-
-    def _InitList(self):
-        listctrl = ListCtrl.EditableListCtrl(self,
-                style = wx.LC_REPORT)
-
-        editable=True
-
-        listctrl.InsertColumn(self.Logic.COL_ID, 'ItemId', ListCtrl.LIST_COL_TYPE_INTEGER, self.UpdateItemId, False)
-        listctrl.InsertColumn(self.Logic.COL_BCODE, 'Barcode', ListCtrl.LIST_COL_TYPE_INTEGER, self.UpdateBarcode, editable)
-        listctrl.InsertColumn(self.Logic.COL_DESC, 'Desc     ')
-        listctrl.InsertColumn(self.Logic.COL_QTY, '      Qty', ListCtrl.LIST_COL_TYPE_NUMBER, self.UpdateRow, editable)
-        listctrl.InsertColumn(self.Logic.COL_UNIT, 'Unit')
-        listctrl.InsertColumn(self.Logic.COL_AVAILABLE, 'Available', ListCtrl.LIST_COL_TYPE_NUMBER)
-        listctrl.InsertColumn(self.Logic.COL_RATE, '     Rate', ListCtrl.LIST_COL_TYPE_CURRENCY)
-        listctrl.InsertColumn(self.Logic.COL_GST, '      GST', ListCtrl.LIST_COL_TYPE_CURRENCY)
-
-        listctrl.InsertColumn(self.Logic.COL_TOTAL, '           Total', ListCtrl.LIST_COL_TYPE_CURRENCY)
-
-
-
-        listctrl.InsertColumn(self.Logic.COL_GSTP, 'GST%', ListCtrl.LIST_COL_TYPE_PERCENT, hidden=True)
-        listctrl.InsertColumn(self.Logic.COL_DISC, 'Disc', ListCtrl.LIST_COL_TYPE_CURRENCY, self.UpdateRow, editable, hidden=True)
-
-        listctrl.setResizeColumn(self.Logic.COL_QTY)
-        listctrl.SetColumnWidth(self.Logic.COL_QTY, -2)
-        listctrl.SetColumnWidth(self.Logic.COL_TOTAL, 100)
-
+    def InitList(self, view=False):
+        listctrl = VGrid(self, columns=
+                {
+                    self.Logic.COL_ID : VGridIntCol('ItemId', self.UpdateItemId, ReadOnly=view),
+                    self.Logic.COL_BCODE : VGridIntCol('Barcode', self.UpdateBarcode, ReadOnly=view),
+                    self.Logic.COL_DESC: VGridStringColumn('Desc', ReadOnly=True),
+                    self.Logic.COL_QTY: VGridNumberCol('Qty', self.UpdateQty, ReadOnly=view),
+                    self.Logic.COL_UNIT: VGridStringColumn('Unit', ReadOnly=True),
+                    self.Logic.COL_AVAILABLE: VGridNumberCol('Available', ReadOnly=True, Hidden=view),
+                    self.Logic.COL_RATE: VGridCurrencyCol('Rate', ReadOnly=True, symbol="Rf"),
+                    self.Logic.COL_GST: VGridCurrencyCol('GST', ReadOnly=True, symbol="Rf"),
+                    self.Logic.COL_TOTAL: VGridCurrencyCol('Total', ReadOnly=True, symbol="Rf"),
+                    self.Logic.COL_GSTP: VGridPercentCol('GST%', ReadOnly=True, Hidden=True),
+                    self.Logic.COL_DISC: VGridCurrencyCol('Disc', ReadOnly=True, Hidden=True, symbol="Rf")
+                })
+        listctrl.SetResizeCol(self.Logic.COL_DESC)
         return listctrl
 
 
-    def _InitCtrls(self, readonly=False):
-        topsizer = wx.GridBagSizer()
+    def InitControls(self):
+        self.list = self.InitList()
 
-        lblDate = wx.StaticText(self,label = 'Date')
-        #self.tcDate = wx.TextCtrl(self)
-        self.tcDate = DateTimePickerCtrl(self)
-        self.tcDate.label = lblDate
-        if not readonly:
-            self.tcDate.Hide()
-            lblDate.Hide()
-        topsizer.Add(lblDate, (0,0), (1,1), wx.ALL | wx.EXPAND, 5)
-        topsizer.Add(self.tcDate, (0,1), (1,1), wx.ALL, 5)
-
-        lblAddress = wx.StaticText(self,label = 'Address')
+        stAddress = wx.StaticText(self,label = 'Address')
         self.tcAddress = wx.TextCtrl(self)
-        topsizer.Add(lblAddress, (1,0), (1,1), wx.ALL | wx.EXPAND, 5)
-        topsizer.Add(self.tcAddress, (1,1), (1,1), wx.ALL | wx.EXPAND, 5)
 
-        if not readonly:
-            self.fontMed = wx.Font(
-                                    16,
-                                    family=wx.MODERN,
-                                    style=wx.NORMAL,
-                                    weight=wx.FONTWEIGHT_BOLD)
-            self.tcCode = wx.SearchCtrl(self, size=(100,-1),style=wx.TE_PROCESS_ENTER)
-            self.tcCode.SetDescriptiveText("Bar Code/ Item Code")
-            self.tcCode.SetFont(self.fontMed)
-            #self.tcCode.Bind(wx.EVT_KEY_UP, self.OnEnter)
-            self.tcCode.Bind(wx.EVT_TEXT_ENTER, self.OnSearch)
-            #topsizer.Add(self.tcCode, (2,0), (1,2), wx.ALL | wx.EXPAND, 5)
-            stQty = wx.StaticText(self,label = 'Qty')
-            self.tcQty = wx.TextCtrl(self, size=(60,-1), style=wx.TE_RIGHT | wx.ALIGN_RIGHT)
-            self.tcQty.SetValue("1")
-            self.tcQty.SetFont(self.fontMed)
-            self.tcQty.Bind(wx.EVT_KEY_UP, self.OnQty)
-            hbox = wx.BoxSizer(wx.HORIZONTAL)
-            hbox.Add(stQty,0,wx.ALL | wx.ALIGN_CENTER_VERTICAL,0)
-            hbox.Add(self.tcQty,0,wx.ALL,0)
-            hbox.Add(self.tcCode,1,wx.ALL | wx.EXPAND,0)
-            topsizer.Add(hbox, (2,0), (1,2), wx.ALL | wx.EXPAND, 5)
+        self.fontMed = wx.Font(
+            16,
+            family=wx.MODERN,
+            style=wx.NORMAL,
+            weight=wx.FONTWEIGHT_BOLD)
 
+        self.tcCode = wx.SearchCtrl(self, size=(100,-1),style=wx.TE_PROCESS_ENTER)
+        self.tcCode.SetDescriptiveText("Bar Code/ Item Code")
+        self.tcCode.SetFont(self.fontMed)
+        #self.tcCode.Bind(wx.EVT_KEY_UP, self.OnEnter)
+        self.tcCode.Bind(wx.EVT_TEXT_ENTER, self.OnSearch)
 
-            numdisplay = NumberDisplay(self,['Total','Incl. 6% GST'], size=wx.Size(-1,-1))
-            topsizer.Add(numdisplay, (0,2), (3,2), wx.ALL | wx.EXPAND, 5)
-            self.tcTotal = numdisplay.GetStaticText(0)
-            self.tcTax = numdisplay.GetStaticText(1)
-            self.UpdateDisplay = numdisplay.Layout
+        stQty = wx.StaticText(self,label = 'Qty|Code')
+        self.tcQty = wx.TextCtrl(self, size=(60,-1), style=wx.TE_RIGHT | wx.ALIGN_RIGHT)
+        self.tcQty.SetValue("1")
+        self.tcQty.SetFont(self.fontMed)
+        self.tcQty.Bind(wx.EVT_KEY_UP, self.OnQty)
 
-        self.list = self._InitList()
+        self.numdisplay = NumberDisplay(self,['Total','Incl. 6% GST'], size=wx.Size(-1,-1))
 
-        if readonly:
-            self.list.SetLocked(True)
-        topsizer.Add(self.list, (3,0), (1,4), wx.ALL | wx.EXPAND, 5)
+        gridl, gridr, top = self.Layout2()
 
-        self.Bind(wx.EVT_CLOSE, self.OnClose)
+        gridl.Add(stAddress, 0, wx.ALL, 3)
+        gridl.Add(self.tcAddress, 0, wx.ALL| wx.EXPAND, 3)
+        gridr.AddSpacer(0)
+        gridr.Add(self.numdisplay, 1, wx.ALL | wx.EXPAND, 3)
+        hbox = wx.BoxSizer(wx.HORIZONTAL)
+        hbox.Add(self.tcQty,0,wx.ALL,0)
+        hbox.Add(self.tcCode,1,wx.ALL | wx.EXPAND, 0)
+        gridl.AddSpacer(0)
+        gridl.AddSpacer(0)
+        gridl.Add(stQty,0,wx.ALL | wx.ALIGN_CENTER_VERTICAL,3)
+        gridl.Add(hbox, 0, wx.ALL | wx.EXPAND, 3)
+        gridl.AddGrowableRow(1)
 
-        topsizer.AddGrowableCol(1)
-        topsizer.AddGrowableCol(3)
-        topsizer.AddGrowableRow(3)
+        top.Add(self.list, 1, wx.ALL|wx.EXPAND, 3)
 
-        return topsizer
-
-    def OnDate(self, event):
-        now = wx.DateTime()
-        now.Set
-        #tcDate.SetValue()
-        print tcDate.GetValue()
-
-    def OnEnter(self, event):
-        kcode = event.GetKeyCode()
-        print kcode
-        if kcode == wx.WXK_RETURN or kcode == 370:
-            print "hell"
-            self.OnSearch(event)
 
     def OnQty(self, event):
         kcode = event.GetKeyCode()
         if kcode == wx.WXK_RETURN or kcode == 370:
             self.tcCode.SetFocus()
 
-    def Enable(self):
-        self.GetParent().Enable(True)
-        self.tcAddress.Enable(True)
-        self.tcCode.Enable(True)
-        self.list.Enable(True)
-        self.tcTotal.Enable(True)
-        self.tcTax.Enable(True)
+
+    def SetTotal(self, value):
+        self.numdisplay.SetValue(0, value)
 
 
-    def Disable(self):
-        self.GetParent().Enable(False)
-        self.tcAddress.Enable(False)
-        self.tcCode.Enable(False)
-        self.list.Enable(False)
-        self.tcTotal.Enable(False)
-        self.tcTax.Enable(False)
+    def SetTax(self, value):
+        self.numdisplay.SetValue(1, value)
 
 
     def ShowPaymentDialog(self, paymentMethods, invoiceTotal, invoiceTaxTotal):
@@ -231,16 +146,11 @@ class Invoice(wx.Panel):
         return False, 0.0, 0.0, 0.0, '', False
 
 
+    def DefaultFocus(self):
+        self.tcCode.SetFocus()
+
+
     def IsSaved(self):
-        print self.list.GetItemCount()
-        if self.list.GetItemCount() == 0:
+        if self.list.GetRowCount() == 0:
             return True
         return False
-
-
-    def OnClose(self, event):
-        print "Closing it"
-
-
-
-

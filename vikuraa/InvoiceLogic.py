@@ -22,8 +22,8 @@ class InvoiceLogic(object):
     GetEnteredQty = None
     SetEnteredQty = None
     GetAllItems = None #arg -, ret 2dlist[][?what]
-    GetItemFloat = None #arg row,col ret float
-    SetItemFloat = None #arg row,col,float
+    GetListValue = None #arg row,col ret float
+    SetListValue = None #arg row,col,float
     SetItemInteger = None
     GetColSum = None #arg col, ret float
     GetRowWith = None #arg col, search, ret row(int)
@@ -35,7 +35,7 @@ class InvoiceLogic(object):
     GetPayment = None #arg paymentMethod[][id, name], invoicetotal, taxtotal, ret paymentMethod, tendered, balance, approvalCode
     DeleteRow = None
     SetRow = None #arg row,[?wh], ret bool
-    #GetItemString = None #arg row,col ret str
+    #GetListValue = None #arg row,col ret str
     #SetItemString = None #arg row,col,str
     #GetRow = None #arg row, ret list[?what]
     #GetCol = None #arg col, ret list[?what?]
@@ -66,7 +66,7 @@ class InvoiceLogic(object):
             else:
                 item = query.getOne()
 
-        row = self.GetRowWith(self.COL_ID, str(item.id))
+        row = self.GetRowWith(self.COL_ID, item.id)
 
         try:
             enteredQty = float(self.GetEnteredQty())
@@ -79,10 +79,10 @@ class InvoiceLogic(object):
         self.SetEnteredQty("1")
 
         if row != None:
-            qty = self.GetItemFloat(row, self.COL_QTY)
+            qty = self.GetListValue(row, self.COL_QTY)
             qty += enteredQty
-            self.SetItemFloat(row, self.COL_QTY, qty)
-            self.SetItemFloat(row, self.COL_AVAILABLE, item.stockStart + item.stockIn - item.stockOut)
+            self.SetListValue(row, self.COL_QTY, qty)
+            self.SetListValue(row, self.COL_AVAILABLE, item.stockStart + item.stockIn - item.stockOut)
             self.UpdateRow(row)
         else:
             row = self.InsertRow([
@@ -124,34 +124,38 @@ class InvoiceLogic(object):
 
 
 
-    def UpdateItemId(self, row, col, text):
-        return True
+    def UpdateItemId(self, row, col, value, prev_value):
+        return False
 
 
-    def UpdateBarcode(self, row, col, text):
-        twinrow = self.GetRowWith(self.COL_BCODE, str(text))
+    def UpdateBarcode(self, row, col, value, prev_value):
+        twinrow = self.GetRowWith(self.COL_BCODE, value)
         if twinrow != None:
-            qty = self.GetItemFloat(twinrow, self.COL_QTY)
-            qty += 1
-            self.SetItemFloat(twinrow, self.COL_QTY, qty)
-            self.DeleteRow(row)
-            self.UpdateRow(twinrow)
-            return False
+            if twinrow != row:
+                qty = self.GetListValue(twinrow, self.COL_QTY)
+                qty += 1
+                self.SetListValue(twinrow, self.COL_QTY, qty)
+                self.DeleteRow(row)
+                self.UpdateRow(twinrow)
+                return True
 
         try:
-            code = int(text)
+            code = int(value)
         except:
             print "bad code"
+            self.SetListValue(row, col, prev_value)
             return False
 
         try:
             query = self.db.Item.select(self.db.Item.q.bcode == code)
         except:
             print "not found"
+            self.SetListValue(row, col, prev_value)
             return False
 
         if query.count() != 1:
             print "not found 2"
+            self.SetListValue(row, col, prev_value)
             return False
 
         print "everything fine"
@@ -176,28 +180,27 @@ class InvoiceLogic(object):
         return True
 
 
-    def UpdateRow(self, row, col=0, text=''):
-        if col == self.COL_QTY:
-            qty = float(text)
-            disc = self.GetItemFloat(row, self.COL_DISC)
-        elif col == self.COL_DISC:
-            qty = self.GetItemFloat(row, self.COL_QTY)
-            disc = float(text)
-        else:
-            qty = self.GetItemFloat(row, self.COL_QTY)
-            disc = self.GetItemFloat(row, self.COL_DISC)
-
-        if qty == 0.0 :
+    def UpdateQty(self, row, col, value, prev_value):
+        if value == 0:
             self.DeleteRow(row)
+            self.UpdateTotals()
+            return False
+        else:
+            self.UpdateRow(row)
+            return True
 
-        rate = self.GetItemFloat(row, self.COL_RATE)
-        gstP = self.GetItemFloat(row, self.COL_GSTP)
+
+    def UpdateRow(self, row):
+        qty = self.GetListValue(row, self.COL_QTY)
+        disc = self.GetListValue(row, self.COL_DISC)
+        rate = self.GetListValue(row, self.COL_RATE)
+        gstP = self.GetListValue(row, self.COL_GSTP)
 
         total = qty * rate - disc
         tax = total - ((100 * total)/(100 + gstP))
 
-        self.SetItemFloat(row, self.COL_GST, tax)
-        self.SetItemFloat(row, self.COL_TOTAL, total)
+        self.SetListValue(row, self.COL_GST, tax)
+        self.SetListValue(row, self.COL_TOTAL, total)
 
         self.UpdateTotals()
 
@@ -334,6 +337,7 @@ class InvoiceLogic(object):
                         self.COL_GST,
                         self.COL_DISC,
                         self.COL_TOTAL])
+            print entries
 
             for entrie in entries:
                 if entrie[self.COL_ID] == 0:

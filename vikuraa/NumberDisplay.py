@@ -65,6 +65,7 @@ class NumberDisplay(wx.Panel):
 
     def SetValue(self, row, value):
         self.value[row].SetLabel(value)
+        self.Layout()
 
 
     def GetStaticText(self, row):

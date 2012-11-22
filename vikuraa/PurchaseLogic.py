@@ -316,7 +316,7 @@ class PurchaseLogic(object):
         self.Lock(row, self.COL_EXPIRY, False)
 
 
-    def UpdateItemId(self,row,col,code):
+    def UpdateItemId(self,row,col,code, prev_code):
         try:
             item = self.db.Item.get(code)
         except:
@@ -332,7 +332,7 @@ class PurchaseLogic(object):
             self.SetForExistingItem(row)
 
 
-    def UpdateItemBarcode(self,row,col,code):
+    def UpdateItemBarcode(self,row,col,code, prev_code):
         itemid = self.GetListValue(row, self.COL_ITEM_ID)
         if itemid == 0:
             #Search if no item selected
@@ -355,5 +355,4 @@ class PurchaseLogic(object):
                 item = query[0]
                 if item.id != itemid:
                     print "Another item with same bcode exists"
-                    item = self.db.Item.get(itemid)
-                    self.SetListValue(row, self.COL_ITEM_BCODE, item.bcode)
+                    self.SetListValue(row, self.COL_ITEM_BCODE, prev_code)
