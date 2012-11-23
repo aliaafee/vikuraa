@@ -1,8 +1,6 @@
 import sqlobject as sql
 import sqlobject.sqlbuilder as sqlb
 
-sql.col.default_datetime_implementation = sql.MXDATETIME_IMPLEMENTATION
-
 
 class User(sql.SQLObject):
     name = sql.StringCol()

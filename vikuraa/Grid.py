@@ -1,6 +1,6 @@
 import  wx
 import  wx.grid as  gridlib
-from mx import DateTime
+from datetime import datetime
 import locale
 import Format
 
@@ -15,10 +15,10 @@ class NumberRenderer(gridlib.PyGridCellRenderer):
 
         dc.SetBackgroundMode(wx.SOLID)
         if not isSelected:
-            if value > 0:
-                dc.SetBrush(wx.Brush(grid.GetCellBackgroundColour(row, col) , wx.SOLID))
-            else:
+            if value == 0:
                 dc.SetBrush(wx.Brush(wx.Colour(255,230,240) , wx.SOLID))
+            else:
+                dc.SetBrush(wx.Brush(grid.GetCellBackgroundColour(row, col) , wx.SOLID))
         else:
             dc.SetBrush(wx.Brush(wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT), wx.SOLID))
         dc.SetPen(wx.TRANSPARENT_PEN)
@@ -116,8 +116,7 @@ class DateRenderer(NumberRenderer):
     def Draw2(self, grid, attr, dc, rect, row, col, isSelected):
 
         value = grid.GetCellValue(row, col)
-        tm_year,tm_mon,tm_mday,tm_hour,tm_min,tm_sec,tm_wday,tm_yday,tm_isdst = value.tuple()
-        text = "{0}/{1}/{2}".format(tm_mday, tm_mon, tm_year)
+        text = "{0}/{1}/{2}".format(value.day, value.month, value.year)
 
         w, h = dc.GetTextExtent(text)
 
@@ -158,19 +157,21 @@ class VGridDateCol(VGridColumn):
     def __init__(self, Label, EditDoneCallback=None, ReadOnly=False, Hidden=False, Sum=False):
         VGridColumn.__init__(self, Label, EditDoneCallback, ReadOnly, Hidden, Sum)
         self.Renderer = DateRenderer()
-        self.Default = DateTime.now()
+        self.Default = datetime.now()
 
     def StringToValue(self, datestr):
         date = datestr.split('/')
         if len(date) != 3:
             raise ValueError
         else:
-            value = DateTime.DateTime(int(date[2]), int(date[1]), int(date[0]), 0, 0, 0)
+            try:
+                value = datetime(int(date[2]), int(date[1]), int(date[0]), 0, 0, 0)
+            except:
+                raise ValueError
         return value
 
     def ValueToString(self, value):
-        tm_year,tm_mon,tm_mday,tm_hour,tm_min,tm_sec,tm_wday,tm_yday,tm_isdst = value.tuple()
-        return "{0}/{1}/{2}".format(tm_mday, tm_mon, tm_year)
+        return "{0}/{1}/{2}".format(value.day, value.month, value.year)
 
 
 
@@ -444,8 +445,8 @@ if __name__ == "__main__":
     app = wx.App()
     frame = wx.Frame(None, size=wx.Size(800,600))
 
-    def datecallback(row,col,value):
-        print "edited {0} {1} to {2}".format(row, col, str(value))
+    def datecallback(row,col,value,prev_value):
+        print "edited {0} {1} to {2} from {3}".format(row, col, str(value), str(prev_value))
 
     g = VGrid(frame, columns=
         {
@@ -460,7 +461,7 @@ if __name__ == "__main__":
     row = g.AppendRow()
     g.SetRow(row,[
             'ali',
-            DateTime.now(),
+            datetime.now(),
             100,
             45.131513,
             123,
@@ -468,7 +469,7 @@ if __name__ == "__main__":
     row = g.AppendRow()
     g.SetRow(row,[
             'ali',
-            DateTime.now(),
+            datetime.now(),
             100,
             45.131513,
             321,

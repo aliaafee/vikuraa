@@ -1,4 +1,4 @@
-from mx import DateTime
+from datetime import datetime
 import Format
 
 
@@ -315,7 +315,7 @@ class InvoiceLogic(object):
 
             invoice = self.db.Invoice(
                 user = self.session.user.id,
-                time = DateTime.now(),
+                time = datetime.now(),
                 address = self.GetAddress(),
                 total = self.InvoiceTotal,
                 totalTax = self.InvoiceTaxTotal,

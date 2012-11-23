@@ -1,4 +1,4 @@
-from mx import DateTime
+from datetime import datetime
 import Format
 import sqlobject.sqlbuilder as sqlb
 import sqlobject
@@ -94,7 +94,7 @@ class PurchaseLogic(object):
     def New(self):
         self.ClearAll()
         self.SetPurchaseBillId('New')
-        self.SetDate(DateTime.now())
+        self.SetDate(datetime.now())
         self.SetSupplier(0)
         self.SetTaxCategory(0)
 
@@ -291,7 +291,7 @@ class PurchaseLogic(object):
             '',
             0,
             0,
-            DateTime.now() ])
+            datetime.now() ])
 
 
     def SetForNewItem(self, row):

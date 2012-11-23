@@ -2,7 +2,7 @@ import sqlobject as sql
 import sqlobject.sqlbuilder as sqlb
 import socket
 
-from mx import DateTime
+from datetime import datetime
 
 class SessionManager(object):
     user = None
@@ -37,7 +37,7 @@ class SessionManager(object):
         
         
     def loginSession(self):
-        now = DateTime.now()
+        now = datetime.now()
         
         newSession = self.db.Session(
             user=self.user.name, 
@@ -58,7 +58,7 @@ class SessionManager(object):
             
     def logoutSession(self):
         if self.session != None:
-            now = DateTime.now()
+            now = datetime.now()
             
             update = sqlb.Delete('session', 
                         where=(self.db.Session.q.id == self.session.id))

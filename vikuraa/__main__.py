@@ -2,7 +2,7 @@ import sys, os
 import getopt
 import wx
 
-from mx import DateTime
+from datetime import datetime
 
 from MainFrame import MainFrame
 from Database import Db
@@ -89,7 +89,7 @@ def main(argv):
         try:
             start(uri)
         except:
-            logging.exception(str(DateTime.now()))
+            logging.exception(str(datetime.now()))
             raise
 
 

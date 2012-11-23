@@ -1,5 +1,5 @@
 import wx
-from mx import DateTime
+from datetime import datetime
 
 
 class DateTimePickerCtrl(wx.Panel):
@@ -8,64 +8,56 @@ class DateTimePickerCtrl(wx.Panel):
         self.showtime = showtime
         self.SetBackgroundColour('WHITE')
         self._InitCtrls()
-        self.SetValue(DateTime.now())
+        self.SetValue(datetime.now())
 
 
     def _InitCtrls(self):
         self.DatePicker = wx.DatePickerCtrl(self, style=wx.DP_DROPDOWN|wx.NO_BORDER)
         self.TimePicker = wx.TextCtrl(self, style=wx.SIMPLE_BORDER)
+        
         sizer = wx.BoxSizer(wx.HORIZONTAL)
         sizer.Add(self.DatePicker, 1, wx.ALL | wx.EXPAND, 0)
         sizer.Add(self.TimePicker, 1, wx.ALL | wx.EXPAND, 0)
+        
         self.SetSizer(sizer)
         if not self.showtime:
             self.TimePicker.Hide()
 
 
     def SetValue(self, value):
-        "value as mx.DateTime"
+        "value as python datetime"
+        self.value = value
 
-        self.DatePicker.Show()
+        wxdt = wx.DateTimeFromDMY(self.value.day, self.value.month-1, self.value.year)
+        self.DatePicker.SetValue(wxdt)
 
-        tm_year,tm_mon,tm_mday,tm_hour,tm_min,tm_sec,tm_wday,tm_yday,tm_isdst = value.tuple()
-
-        try:
-            dt = wx.DateTimeFromDMY(tm_mday,tm_mon,tm_year)
-            self.DatePicker.SetValue(dt)
-
-            self.TimePicker.SetValue("{0}:{1}:{2}".format(
-                                                    str(tm_hour).zfill(2),
-                                                    str(tm_min).zfill(2),
-                                                    str(tm_sec).zfill(2)))
-
-            self.mxDateTime = value
-            self.Layout()
-        except:
-            self.DatePicker.Hide()
-            self.Layout()
-            self.TimePicker.SetValue(str(value))
+        self.TimePicker.SetValue("{0}:{1}:{2}".format(
+                                                str(self.value.hour).zfill(2),
+                                                str(self.value.minute).zfill(2),
+                                                str(value.second).zfill(2)))
 
 
     def GetValue(self):
-        self.DateTime = self.DatePicker.GetValue()
-
-        tm_year,tm_mon,tm_mday,tm_hour,tm_min,tm_sec,tm_wday,tm_yday,tm_isdst = self.mxDateTime.tuple()
+        wxdt = self.DatePicker.GetValue()
 
         if not self.showtime:
             tm_hour = 0
             tm_min = 0
             tm_sec = 0
+        else:
+            tm_hour = self.value.hour
+            tm_min = self.value.minute
+            tm_sec = self.value.second
 
-        value = DateTime.DateTime(
-                    self.DateTime.GetYear(),
-                    self.DateTime.GetMonth(),
-                    self.DateTime.GetDay(),
+        self.value = datetime(
+                    wxdt.Year,
+                    wxdt.Month+1,
+                    wxdt.Day,
                     tm_hour,
                     tm_min,
                     tm_sec)
 
-        self.mxDateTime = value
-        return value
+        return self.value
 
 
 
@@ -79,7 +71,5 @@ if __name__ == "__main__":
     sz.Add(pnl,0,wx.ALL|wx.EXPAND,10)
     frame.SetSizer(sz)
     frame.Show()
-    value = DateTime.DateTime(2012,11,6,1,3,3)
-    pnl.SetValue(value)
     print pnl.GetValue()
     app.MainLoop()
