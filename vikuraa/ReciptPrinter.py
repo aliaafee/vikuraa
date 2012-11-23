@@ -1,7 +1,4 @@
-import usb
 import sys
-
-
 
 
 class ReciptPrinter(object):
