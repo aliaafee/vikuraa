@@ -60,7 +60,7 @@ class Invoice(VWindow):
         listctrl = VGrid(self, columns=
                 {
                     self.Logic.COL_ID : VGridIntCol('ItemId', self.UpdateItemId, ReadOnly=view),
-                    self.Logic.COL_BCODE : VGridIntCol('Barcode', self.UpdateBarcode, ReadOnly=view),
+                    self.Logic.COL_BCODE : VGridStringColumn('Barcode', self.UpdateBarcode, ReadOnly=view),
                     self.Logic.COL_DESC: VGridStringColumn('Desc', ReadOnly=True),
                     self.Logic.COL_QTY: VGridNumberCol('Qty', self.UpdateQty, ReadOnly=view),
                     self.Logic.COL_UNIT: VGridStringColumn('Unit', ReadOnly=True),

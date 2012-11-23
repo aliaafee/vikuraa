@@ -121,8 +121,8 @@ class InvoiceLogic(object):
             self.AddItem(code, True)
             event.Skip()
             return
-        elif code.isdigit():
-            self.AddItem(int(code))
+        else:
+            self.AddItem(code)
             event.Skip()
             return
 

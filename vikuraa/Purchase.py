@@ -88,7 +88,7 @@ class Purchase(VWindow):
                 {
                     self.Logic.COL_ID : VGridIntCol('PurchId', ReadOnly=True, Hidden=True),
                     self.Logic.COL_ITEM_ID : VGridIntCol('ItemId', self.UpdateItemId),
-                    self.Logic.COL_ITEM_BCODE : VGridIntCol('Barcode', self.UpdateItemBarcode),
+                    self.Logic.COL_ITEM_BCODE : VGridStringColumn('Barcode', self.UpdateItemBarcode),
                     self.Logic.COL_ITEM_DESC : VGridStringColumn('Desc'),
                     self.Logic.COL_QTY : VGridNumberCol('Qty'),
                     self.Logic.COL_ITEM_UNIT: VGridStringColumn('Unit'),

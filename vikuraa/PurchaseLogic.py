@@ -2,7 +2,6 @@ from datetime import datetime
 import Format
 import sqlobject.sqlbuilder as sqlb
 import sqlobject
-#import TextTable as tb
 
 class PurchaseLogic(object):
     COL_ID = 0
@@ -146,8 +145,8 @@ class PurchaseLogic(object):
                 stockIn = 0,
                 stockOut = 0,
                 taxCategory = self.GetTaxCategory())
-        if item.bcode == 0:
-            item.bcode = item.id
+        if item.bcode == '':
+            item.bcode = 'S'+(str(hex(item.id))[2:]).upper().zfill(4)
         return item
 
 
@@ -285,7 +284,7 @@ class PurchaseLogic(object):
         self.SetRow( row,
             [ self.GetListValue(row, self.COL_ID),
             0,
-            0,
+            '',
             '',
             0,
             '',

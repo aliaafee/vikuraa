@@ -40,7 +40,7 @@ class TaxCategory(sql.SQLObject):
 
 
 class Item(sql.SQLObject):
-    bcode = sql.IntCol()
+    bcode = sql.StringCol()
     desc  = sql.StringCol()
     unit = sql.StringCol()
     selling = sql.FloatCol()
