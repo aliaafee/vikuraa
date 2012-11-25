@@ -1,4 +1,11 @@
 from distutils.core import setup
 import py2exe
 
-setup(windows=['__main__.py'])
+setup(
+    windows=['__main__.py'],
+    options={
+        "py2exe": {
+            "includes":["sqlalchemy"]
+            }
+        }
+    )

@@ -1,5 +1,6 @@
-from sqlalchemy.ext.declarative import declared_attr
+from sqlalchemy.dialects.sqlite.base import dialect
 from sqlalchemy import Column
+from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy import Integer, String, ForeignKey, DateTime, Float, Text, Boolean
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
@@ -135,7 +136,7 @@ def StartEngine(uri):
     Session.configure(bind=engine)
 
     session = Session()
-    adminuser = session.query(User).filter_by(id='a').first()
+    adminuser = session.query(User).filter_by(id='admin').first()
     
     if adminuser == None:
         CashAccount = Account(name='Cash Account', amount=0.0)
@@ -150,7 +151,7 @@ def StartEngine(uri):
         defaultTax = TaxCategory(name='GST', rate=6.0)
         defaultSupplier = Supplier(name='Default')
 
-        AdminUser = User(id='a', name='Administrator',password='a', privilages='LOGIN')
+        AdminUser = User(id='admin', name='Administrator',password='admin', privilages='LOGIN')
 
         session.add_all([CashMethod, CreditMethod, defaultTax, AdminUser, defaultSupplier])
 

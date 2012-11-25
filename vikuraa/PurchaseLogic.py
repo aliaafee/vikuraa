@@ -2,6 +2,7 @@ from datetime import datetime
 import Format
 
 from Database import Session, Supplier, TaxCategory, PurchaseBill, Item, Purchase
+from sqlalchemy.orm.exc import NoResultFound
 
 
 class PurchaseLogic(object):
@@ -52,7 +53,7 @@ class PurchaseLogic(object):
             last = query[-1]
             self.PurchaseBill = last
             self.Display()
-        except:
+        except IndexError:
             self.PurchaseBill = None
             self.New()
 
@@ -64,14 +65,14 @@ class PurchaseLogic(object):
                 last = query[-1]
                 self.PurchaseBill = last
                 self.Display()
-            except:
+            except IndexError:
                 pass
         else:
             try:
                 self.PurchaseBill = self.session.query(PurchaseBill).\
                                     filter(PurchaseBill.id == (self.PurchaseBill.id - 1)).one()
                 self.Display()
-            except:
+            except NoResultFound:
                 print "No more behind"
 
 
@@ -81,7 +82,7 @@ class PurchaseLogic(object):
                 self.PurchaseBill = self.session.query(PurchaseBill).\
                                     filter(PurchaseBill.id == (self.PurchaseBill.id + 1)).one()
                 self.Display()
-            except:
+            except NoResultFound:
                 self.PurchaseBill = None
                 self.New()
 
@@ -91,7 +92,7 @@ class PurchaseLogic(object):
             self.PurchaseBill = self.session.query(PurchaseBill).\
                                     filter(PurchaseBill.id == (billid)).one()
             self.Display()
-        except:
+        except NoResultFound:
             if self.PurchaseBill != None:
                 self.SetPurchaseBillId(str(self.PurchaseBill.id))
             else:
@@ -174,11 +175,13 @@ class PurchaseLogic(object):
             for row in range(self.GetRowCount()):
                 purchaseid = self.GetListValue(row, self.COL_ID)
                 if purchaseid == 0:
+                    print "saving new"
                     self.SaveNewPurchase(row, self.PurchaseBill)
                 else:
+                    print "saving old"
                     self.OverWritePurchase(purchaseid, row, self.PurchaseBill)
 
-        except ValueError, err:
+        except Exception, err:
             self.session.rollback()
             print('ERROR: %s\n' % str(err))
 
@@ -188,10 +191,10 @@ class PurchaseLogic(object):
             self.Display()
 
 
-    def OverWritePurchase(self, purchasid, row, bill):
+    def OverWritePurchase(self, purchaseid, row, bill):
         try:
-            purchase = self.session.query(Purchase).filer(Purchase.id == purchaseid).one()
-        except:
+            purchase = self.session.query(Purchase).filter(Purchase.id == purchaseid).one()
+        except NoResultFound:
             self.SaveNewPurchase(row, bill)
             return
 
@@ -208,7 +211,7 @@ class PurchaseLogic(object):
                 else:
                     try:
                         item = self.session.query(Item).filter(Item.id == itemid).one()
-                    except:
+                    except NoResultFound:
                         itemid = 0
                         item = self.AddNewItem(row)
 
@@ -230,9 +233,9 @@ class PurchaseLogic(object):
             '''
             self.session.delete(purchase)
             self.session.flush()
-            if item.stockStart == 0 and item.stockIn == 0 and item.stockOut == 0:
-                self.session.delete(item)
-                self.session.flush()
+            #if item.stockStart == 0 and item.stockIn == 0 and item.stockOut == 0:
+            #    self.session.delete(item)
+            #    self.session.flush()
 
 
     def SaveNewPurchase(self, row, bill):
@@ -244,7 +247,7 @@ class PurchaseLogic(object):
             else:
                 try:
                     item = self.session.query(Item).filter(Item.id == itemid).one()
-                except:
+                except NoResultFound:
                     itemid = 0
                     item = self.AddNewItem(row)
 

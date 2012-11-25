@@ -78,7 +78,7 @@ def main(argv):
         elif opt in ("-l", "--log"):
             log = arg
 
-    uri = 'sqlite:///' + os.path.abspath('test.db')
+    uri = 'sqlite:///' + os.path.abspath('shop.db')
 
     if log == '':
         start(uri)
