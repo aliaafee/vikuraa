@@ -5,7 +5,7 @@ import wx
 from datetime import datetime
 
 from MainFrame import MainFrame
-from Database import Db
+import Database
 from SessionManager import SessionManager
 
 
@@ -15,23 +15,22 @@ class Peripherals(object):
 
 
 class Vikuraa(wx.App):
-    def __init__(self, db, session, peripherals, parent=None):
-        self.db = db
+    def __init__(self, session, peripherals, parent=None):
         self.session = session
         self.peripherals = peripherals
         wx.App.__init__(self, parent)
 
 
     def OnInit(self):
-        self.mainFrame = MainFrame(None, self.db, self.session, self.peripherals)
+        self.mainFrame = MainFrame(None, self.session, self.peripherals)
         self.mainFrame.Show()
         return True
 
 
 def start(dbconnectionstring):
-    db = Db(dbconnectionstring)
+    Database.StartEngine(dbconnectionstring)
 
-    session = SessionManager(db)
+    session = SessionManager()
 
     peripherals = Peripherals
 
@@ -40,8 +39,9 @@ def start(dbconnectionstring):
 
     #from EpsonEscPos import EpsonEscPos
     #peripherals.ReciptPrinter = EpsonEscPos
-
-    app = Vikuraa(db, session, peripherals)
+    
+    app = Vikuraa(session, peripherals)
+    
     app.MainLoop()
 
 
@@ -78,7 +78,7 @@ def main(argv):
         elif opt in ("-l", "--log"):
             log = arg
 
-    uri = 'sqlite:' + os.path.abspath('shop.db') #+ '?debug=t'
+    uri = 'sqlite:///' + os.path.abspath('test.db')
 
     if log == '':
         start(uri)

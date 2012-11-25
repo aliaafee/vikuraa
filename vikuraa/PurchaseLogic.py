@@ -1,7 +1,8 @@
 from datetime import datetime
 import Format
-import sqlobject.sqlbuilder as sqlb
-import sqlobject
+
+from Database import Session, Supplier, TaxCategory, PurchaseBill, Item, Purchase
+
 
 class PurchaseLogic(object):
     COL_ID = 0
@@ -32,17 +33,22 @@ class PurchaseLogic(object):
     PurchaseBillIdError = None
 
 
-    def __init__(self, db, session, peripherals):
-        self.db = db
-        self.session = session
+    def __init__(self, userSession, peripherals):
+        self.userSession = userSession
         self.peripherals = peripherals
+
+        self.session = Session()
+
+
+    def __del__(self):
+        self.session.close()
 
 
     def Start(self):
-        self.SetSupplierList(self.db.Supplier)
-        self.SetTaxCategoryList(self.db.TaxCategory)
+        self.SetSupplierList(Supplier)
+        self.SetTaxCategoryList(TaxCategory)
         try:
-            query = self.db.PurchaseBill.select()
+            query = self.session.query(PurchaseBill)
             last = query[-1]
             self.PurchaseBill = last
             self.Display()
@@ -54,7 +60,7 @@ class PurchaseLogic(object):
     def OnBack(self, event):
         if self.PurchaseBill == None:
             try:
-                query = self.db.PurchaseBill.select()
+                query = self.session.query(PurchaseBill)
                 last = query[-1]
                 self.PurchaseBill = last
                 self.Display()
@@ -62,27 +68,30 @@ class PurchaseLogic(object):
                 pass
         else:
             try:
-                self.PurchaseBill = self.db.PurchaseBill.get(self.PurchaseBill.id - 1)
+                self.PurchaseBill = self.session.query(PurchaseBill).\
+                                    filter(PurchaseBill.id == (self.PurchaseBill.id - 1)).one()
                 self.Display()
-            except sqlobject.main.SQLObjectNotFound:
+            except:
                 print "No more behind"
 
 
     def OnForward(self, event):
         if self.PurchaseBill != None:
             try:
-                self.PurchaseBill = self.db.PurchaseBill.get(self.PurchaseBill.id + 1)
+                self.PurchaseBill = self.session.query(PurchaseBill).\
+                                    filter(PurchaseBill.id == (self.PurchaseBill.id + 1)).one()
                 self.Display()
-            except sqlobject.main.SQLObjectNotFound:
+            except:
                 self.PurchaseBill = None
                 self.New()
 
 
     def GoToPurchaseBill(self, billid):
         try:
-            self.PurchaseBill = self.db.PurchaseBill.get(billid)
+            self.PurchaseBill = self.session.query(PurchaseBill).\
+                                    filter(PurchaseBill.id == (billid)).one()
             self.Display()
-        except sqlobject.main.SQLObjectNotFound:
+        except:
             if self.PurchaseBill != None:
                 self.SetPurchaseBillId(str(self.PurchaseBill.id))
             else:
@@ -136,7 +145,7 @@ class PurchaseLogic(object):
 
 
     def AddNewItem(self, row):
-        item = self.db.Item(
+        item = Item(
                 bcode = self.GetListValue(row, self.COL_ITEM_BCODE),
                 desc = self.GetListValue(row, self.COL_ITEM_DESC),
                 unit = self.GetListValue(row, self.COL_ITEM_UNIT),
@@ -144,19 +153,23 @@ class PurchaseLogic(object):
                 stockStart = 0,
                 stockIn = 0,
                 stockOut = 0,
-                taxCategory = self.GetTaxCategory())
+                taxCategory_id = self.GetTaxCategory())
+
+        self.session.add(item)
+        self.session.flush()
+        
         if item.bcode == '':
-            item.bcode = 'S'+(str(hex(item.id))[2:]).upper().zfill(4)
+            item.bcode = 'S'+(str(item.id)).upper().zfill(4)
+        
         return item
 
 
     def OverWrite(self):
         print "OverWriting"
-        self.db.startTransaction()
         try:
             self.PurchaseBill.time = self.GetDate()
-            self.PurchaseBill.supplier = self.GetSupplier()
-            self.PurchaseBill.user = self.session.user.id
+            self.PurchaseBill.supplier_id = self.GetSupplier()
+            self.PurchaseBill.user_id = self.userSession.user.id
 
             for row in range(self.GetRowCount()):
                 purchaseid = self.GetListValue(row, self.COL_ID)
@@ -166,19 +179,18 @@ class PurchaseLogic(object):
                     self.OverWritePurchase(purchaseid, row, self.PurchaseBill)
 
         except ValueError, err:
-            self.db.rollbackTransaction()
+            self.session.rollback()
             print('ERROR: %s\n' % str(err))
 
             print "error bill not saved"
         else:
-            self.db.commitTransaction()
+            self.session.commit()
             self.Display()
-        self.db.endTransaction()
 
 
     def OverWritePurchase(self, purchasid, row, bill):
         try:
-            purchase = self.db.Purchase.get(purchasid)
+            purchase = self.session.query(Purchase).filer(Purchase.id == purchaseid).one()
         except:
             self.SaveNewPurchase(row, bill)
             return
@@ -195,13 +207,13 @@ class PurchaseLogic(object):
                     item = self.AddNewItem(row)
                 else:
                     try:
-                        item = self.db.Item.get(itemid)
+                        item = self.session.query(Item).filter(Item.id == itemid).one()
                     except:
                         itemid = 0
                         item = self.AddNewItem(row)
 
 
-            purchase.item = item.id
+            purchase.item_id = item.id
             purchase.qty = qty
             purchase.cost = self.GetListValue(row, self.COL_COST)
             purchase.expiry = self.GetListValue(row, self.COL_EXPIRY)
@@ -216,16 +228,11 @@ class PurchaseLogic(object):
             '''
             If the qty is zero the delete this purchase record
             '''
-            update = sqlb.Delete('purchase',
-                        where=(self.db.Purchase.q.id == purchase.id))
-            query = self.db.connection.sqlrepr(update)
-            self.db.connection.query(query)
+            self.session.delete(purchase)
+            self.session.flush()
             if item.stockStart == 0 and item.stockIn == 0 and item.stockOut == 0:
-                update = sqlb.Delete('item',
-                        where=(self.db.Item.q.id == item.id))
-                query = self.db.connection.sqlrepr(update)
-                self.db.connection.query(query)
-
+                self.session.delete(item)
+                self.session.flush()
 
 
     def SaveNewPurchase(self, row, bill):
@@ -236,17 +243,19 @@ class PurchaseLogic(object):
                 item = self.AddNewItem(row)
             else:
                 try:
-                    item = self.db.Item.get(itemid)
+                    item = self.session.query(Item).filter(Item.id == itemid).one()
                 except:
                     itemid = 0
                     item = self.AddNewItem(row)
 
-            purchase = self.db.Purchase(
-                item=item.id,
-                purchaseBill = bill.id,
+            purchase = Purchase(
+                item_id=item.id,
+                purchaseBill_id = bill.id,
                 qty = qty,
                 cost = self.GetListValue(row, self.COL_COST),
                 expiry = self.GetListValue(row, self.COL_EXPIRY))
+
+            self.session.add(purchase)
 
             item.stockIn = item.stockIn + purchase.qty
 
@@ -256,28 +265,27 @@ class PurchaseLogic(object):
             print "nothing to save"
             return
 
-        self.db.startTransaction()
         try:
-            bill = self.db.PurchaseBill(
+            bill = PurchaseBill(
                     time = self.GetDate(),
-                    supplier = self.GetSupplier(),
-                    user = self.session.user.id)
+                    supplier_id = self.GetSupplier(),
+                    user_id = self.userSession.user.id)
+
+            self.session.add(bill)
+            self.session.flush()
 
             for row in range(self.GetRowCount()):
                 self.SaveNewPurchase(row, bill)
 
-
-
         except Exception, err:
-            self.db.rollbackTransaction()
+            self.session.rollback()
             print('ERROR: %s\n' % str(err))
 
             print "error bill not saved"
         else:
-            self.db.commitTransaction()
+            self.session.commit()
             self.PurchaseBill = bill
             self.Display()
-        self.db.endTransaction()
 
 
     def ClearRow(self, row):
@@ -317,7 +325,7 @@ class PurchaseLogic(object):
 
     def UpdateItemId(self,row,col,code, prev_code):
         try:
-            item = self.db.Item.get(code)
+            item = self.session.query(Item).filter(Item.id == code).one()
         except:
             self.ClearRow(row)
             self.SetListValue(row, self.COL_ITEM_ID, code)
@@ -335,12 +343,12 @@ class PurchaseLogic(object):
         itemid = self.GetListValue(row, self.COL_ITEM_ID)
         if itemid == 0:
             #Search if no item selected
-            query = self.db.Item.select(self.db.Item.q.bcode == code)
-            if query.count() != 1:
+            try:
+                item = self.session.query(Item).filter(Item.bcode == code).one()
+            except:
                 self.SetListValue(row, self.COL_ITEM_BCODE, code)
                 self.SetForNewItem(row)
             else:
-                item = query.getOne()
                 self.SetListValue(row, self.COL_ITEM_ID, item.id)
                 self.SetListValue(row, self.COL_ITEM_BCODE, item.bcode)
                 self.SetListValue(row, self.COL_ITEM_DESC, item.desc)
@@ -349,9 +357,12 @@ class PurchaseLogic(object):
                 self.SetForExistingItem(row)
         else:
             #If item select check whether any item is using the entered barcode
-            query = self.db.Item.select(self.db.Item.q.bcode == code)
-            if query.count() > 0:
-                item = query[0]
-                if item.id != itemid:
-                    print "Another item with same bcode exists"
-                    self.SetListValue(row, self.COL_ITEM_BCODE, prev_code)
+            try:
+                other = self.session.query(Item).filter(Item.bcode == code).filter(Item.id != itemid).one()
+            except:
+                pass
+            else:
+                print "Another item with same bcode exists"
+                self.SetListValue(row, self.COL_ITEM_BCODE, prev_code)
+
+

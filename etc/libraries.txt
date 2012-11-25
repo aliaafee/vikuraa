@@ -1,4 +1,4 @@
 wxPython
-SQLObject
+Sqlalchemy
 libusb1 (req by epsonrecipt printer)
 pyusb 1.0 (req by epson recipt printer)

@@ -1,212 +1,158 @@
-import sqlobject as sql
-import sqlobject.sqlbuilder as sqlb
+from sqlalchemy.ext.declarative import declared_attr
+from sqlalchemy import Column
+from sqlalchemy import Integer, String, ForeignKey, DateTime, Float, Text, Boolean
+from sqlalchemy import create_engine
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker, relationship, backref
 
 
-class User(sql.SQLObject):
-    name = sql.StringCol()
-    password = sql.StringCol()
-    privilages = sql.StringCol(default='')
-    invoices = sql.MultipleJoin('Invoice')
-    purchaseBills = sql.MultipleJoin('PurchaseBill')
+Session = sessionmaker()
+
 
+class Base(object):
+    @declared_attr
+    def __tablename__(self):
+        return self.__name__.lower()
 
+    id = Column(Integer, primary_key=True)
+
 
+Base = declarative_base(cls=Base)
 
-class Session(sql.SQLObject):
-    user = sql.StringCol()
-    time = sql.DateTimeCol()
-    host = sql.StringCol()
-    port = sql.IntCol()
 
+class User(Base):
+    id = Column(String(50), primary_key=True)
+    name = Column(String(100))
+    password = Column(String(50))
+    privilages = Column(String(200))
+
+
+class UserSession(Base):
+    user_id = Column(String(50), ForeignKey('user.id'))
+    time = Column(DateTime)
+    host = Column(String(50))
+    port = Column(Integer)
 
 
-
-class SessionLog(sql.SQLObject):
-    user = sql.StringCol()
-    session = sql.IntCol()
-    time = sql.DateTimeCol()
-    host = sql.StringCol()
-    port = sql.IntCol()
-    action = sql.StringCol()
-
-
-
-
-class TaxCategory(sql.SQLObject):
-    name = sql.StringCol()
-    rate = sql.FloatCol()
-
-
-
-
-class Item(sql.SQLObject):
-    bcode = sql.StringCol()
-    desc  = sql.StringCol()
-    unit = sql.StringCol()
-    selling = sql.FloatCol()
-    stockStart = sql.FloatCol()
-    stockIn = sql.FloatCol()
-    stockOut = sql.FloatCol()
-    taxCategory = sql.ForeignKey('TaxCategory', notNull=True)
-    purchases = sql.MultipleJoin('Purchase')
-
-
-
-
-class Supplier(sql.SQLObject):
-    name = sql.StringCol()
-    address = sql.StringCol(default='')
-    country = sql.StringCol(default='')
-    purchasebills = sql.MultipleJoin('PurchaseBill')
-
-
-
-
-class PurchaseBill(sql.SQLObject):
-    time = sql.DateTimeCol()
-    supplier = sql.ForeignKey('Supplier')
-    user = sql.ForeignKey('User', notNull=True)
-    purchases = sql.MultipleJoin('Purchase')
-
-
-
-
-class Purchase(sql.SQLObject):
-    item = sql.ForeignKey('Item', notNull=True) #, cascade=True)
-    purchaseBill = sql.ForeignKey('PurchaseBill', notNull=True)
-    qty = sql.FloatCol()
-    cost = sql.FloatCol()
-    expiry = sql.DateTimeCol()
-
-
-
-
-class PaymentMethod(sql.SQLObject):
-    name = sql.StringCol()
-    account = sql.ForeignKey('Account')
-    invoices = sql.MultipleJoin('Invoice')
-
-
-
-
-class Invoice(sql.SQLObject):
-    user = sql.ForeignKey('User', notNull=True)
-    time = sql.DateTimeCol()
-    address = sql.StringCol()
-    total = sql.FloatCol()
-    totalTax = sql.FloatCol()
-    tendered = sql.FloatCol()
-    balance = sql.FloatCol()
-    account = sql.ForeignKey('Account', notNull=True)
-    paymentMethod = sql.ForeignKey('PaymentMethod', notNull=True)
-    approvalCode = sql.StringCol()
-    items = sql.MultipleJoin('Sold')
-    printed = sql.BoolCol()
-
-
-
-
-class Sold(sql.SQLObject):
-    invoice = sql.ForeignKey('Invoice', notNull=True)
-    item = sql.ForeignKey('Item', notNull=True)
-    qty = sql.FloatCol()
-    rate = sql.FloatCol()
-    discount = sql.FloatCol()
-    total = sql.FloatCol()
-    totalTax = sql.FloatCol()
-
-
-
-
-class Account(sql.SQLObject):
-    name = sql.StringCol()
-    amount = sql.FloatCol()
-    invoices = sql.MultipleJoin('Invoice')
-    expenditure = sql.MultipleJoin('Expenditure')
-
-
-
-
-class Expenditure(sql.SQLObject):
-    name = sql.StringCol()
-    amount = sql.FloatCol()
-    time = sql.DateTimeCol()
-    account = sql.ForeignKey('Account', notNull=True)
-
-
-
-
-class Db(object):
-    def __init__(self, dburi):
-
-        self.connection = sql.connectionForURI(dburi)
-        sql.sqlhub.processConnection = self.connection
-
-
-        try:
-            PaymentMethod.createTable()
-            Invoice.createTable()
-            PurchaseBill.createTable()
-            Supplier.createTable()
-            Expenditure.createTable()
-            Account.createTable()
-            Sold.createTable()
-            Purchase.createTable()
-            Item.createTable()
-            TaxCategory.createTable()
-            User.createTable()
-            Session.createTable()
-            SessionLog.createTable()
-
-            #Debug data
-            CashAccount = Account(name='Cash Account', amount=0.0)
-            CashMethod = PaymentMethod(name="Cash", account=CashAccount.id)
-
-            CreditAccount = Account(name='Credit Card Account', amount=0.0)
-            CreditMethod = PaymentMethod(name="Credit Card", account=CreditAccount.id)
-
-            defaultSupplier = Supplier(name='Default')
-            dafaultTax = TaxCategory(name='GST', rate=6.0)
-
-            AdminUser = User(name='admin',password='admin', privilages='LOGIN')
-        except sql.dberrors.OperationalError:
-            print "table exists"
-
-        "This is just a shortcut to access table from with in the class"
-        self.User = User
-        self.Session = Session
-        self.SessionLog = SessionLog
-        self.Supplier = Supplier
-        self.Expenditure = Expenditure
-        self.Account = Account
-        self.Sold = Sold
-        self.Invoice = Invoice
-        self.Purchase = Purchase
-        self.Item = Item
-        self.TaxCategory = TaxCategory
-        self.PurchaseBill = PurchaseBill
-        self.PaymentMethod = PaymentMethod
-
-
-    def close(self):
-        pass
-
-
-    def startTransaction(self):
-        self.old_conn = sql.sqlhub.getConnection()
-        self.connection = self.old_conn.transaction()
-        sql.sqlhub.threadConnection = self.connection
-
-
-    def endTransaction(self):
-        self.connection = self.old_conn
-        sql.sqlhub.threadConnection = self.connection
-
-
-    def commitTransaction(self):
-        self.connection.commit()
-
-
-    def rollbackTransaction(self):
-        self.connection.rollback()
+class UserSessionLog(Base):
+    user_id = Column(String(50), ForeignKey('user.id'))
+    time = Column(DateTime)
+    host = Column(String(50))
+    port = Column(Integer)
+    action = Column(String(10))
+
+
+class TaxCategory(Base):
+    name = Column(String(100))
+    rate = Column(Float)
+
+
+class Item(Base):
+    bcode = Column(String(200))
+    desc  = Column(String(200))
+    unit = Column(String(50))
+    selling = Column(Float)
+    stockStart = Column(Float, default=0.0)
+    stockIn = Column(Float, default=0.0)
+    stockOut = Column(Float, default=0.0)
+    taxCategory_id = Column(Integer, ForeignKey('taxcategory.id'))
+    taxCategory = relationship("TaxCategory")
+
+
+class PaymentMethod(Base):
+    name = Column(String(200))
+    account_id = Column(Integer, ForeignKey('account.id'))
+    account = relationship("Account")
+
+
+class Invoice(Base):
+    user_id = Column(Integer, ForeignKey('user.id'))
+    user = relationship("User")
+    time = Column(DateTime)
+    address = Column(Text)
+    total = Column(Float, default=0.0)
+    totalTax = Column(Float, default=0.0)
+    tendered = Column(Float, default=0.0)
+    balance = Column(Float, default=0.0)
+    
+    account_id = Column(Integer, ForeignKey('account.id'))
+    account = relationship("Account")
+    
+    paymentMethod_id = Column(Integer, ForeignKey('paymentmethod.id'))
+    paymentMethod = relationship("PaymentMethod")
+    
+    approvalCode = Column(String(200))
+    printed = Column(Boolean())
+    
+    items = relationship("Sold")
+
+
+class Sold(Base):
+    invoice_id = Column(Integer, ForeignKey('invoice.id'))
+    item_id = Column(Integer, ForeignKey('item.id'))
+    item = relationship('Item')
+    qty = Column(Float, default=0.0)
+    rate = Column(Float, default=0.0)
+    discount = Column(Float, default=0.0)
+    total = Column(Float, default=0.0)
+    totalTax = Column(Float, default=0.0)
+
+
+class Account(Base):
+    name = Column(String(200))
+    amount = Column(Float, default=0.0)
+
+
+class Supplier(Base):
+    name = Column(String(200))
+    address = Column(Text)
+    country = Column(String(200))
+
+
+class PurchaseBill(Base):
+    time = Column(DateTime)
+    supplier_id = Column(Integer, ForeignKey('supplier.id'))
+    supplier = relationship("Supplier")
+    user_id = Column(Integer, ForeignKey('user.id'))
+    purchases = relationship("Purchase")
+
+
+class Purchase(Base):
+    item_id = Column(Integer, ForeignKey('item.id'))
+    item = relationship('Item')
+    purchaseBill_id = Column(Integer, ForeignKey('purchasebill.id'))
+    qty = Column(Float, default=0.0)
+    cost = Column(Float, default=0.0)
+    expiry = Column(DateTime)
+    
+    
+
+def StartEngine(uri):
+    engine = create_engine(uri, echo=False)
+
+    Base.metadata.create_all(engine)
+
+    Session.configure(bind=engine)
+
+    session = Session()
+    adminuser = session.query(User).filter_by(id='a').first()
+    
+    if adminuser == None:
+        CashAccount = Account(name='Cash Account', amount=0.0)
+        CreditAccount = Account(name='Credit Card Account', amount=0.0)
+        
+        session.add_all([CashAccount, CreditAccount])
+        session.flush()
+        
+        CashMethod = PaymentMethod(name="Cash", account_id=CashAccount.id)
+        CreditMethod = PaymentMethod(name="Credit Card", account_id=CreditAccount.id)
+
+        defaultTax = TaxCategory(name='GST', rate=6.0)
+        defaultSupplier = Supplier(name='Default')
+
+        AdminUser = User(id='a', name='Administrator',password='a', privilages='LOGIN')
+
+        session.add_all([CashMethod, CreditMethod, defaultTax, AdminUser, defaultSupplier])
+
+        session.commit()
 

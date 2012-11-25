@@ -1,14 +1,16 @@
-import sqlobject as sql
-import sqlobject.sqlbuilder as sqlb
-import socket
-
 from datetime import datetime
+from Database import Session, User, UserSession, UserSessionLog
+
 
 class SessionManager(object):
     user = None
 
-    def __init__(self, db):
-        self.db = db
+    def __init__(self):
+        self.dbsession = Session()
+
+
+    def __del__(self):
+        self.dbsession.close()
         
         
     def IsLoggedIn(self):
@@ -18,14 +20,16 @@ class SessionManager(object):
         return True
         
         
-    def Login(self, username, password):
-        query = self.db.User.select(self.db.User.q.name == username)
-        
-        if query.count() == 1:
-            result = query.getOne()
-            if result.password == password:
-                if 'LOGIN' in result.privilages:
-                    self.user = result
+    def Login(self, userid, password):
+        user = self.dbsession.query(User).filter(User.id == userid).first()
+
+        print userid
+        print user
+
+        if user != None:
+            if user.password == password:
+                if 'LOGIN' in user.privilages:
+                    self.user = user
                     self.loginSession()
                     return True
         return False
@@ -38,40 +42,43 @@ class SessionManager(object):
         
     def loginSession(self):
         now = datetime.now()
-        
-        newSession = self.db.Session(
-            user=self.user.name, 
+
+        self.userSession = UserSession(
+            user_id=self.user.id, 
             time=now, 
-            host=socket.gethostname(), 
+            host='127.0.0.1', 
             port=0)
-                
-        log = self.db.SessionLog(
-            user=self.user.name, 
-            session=newSession.id, 
+
+        self.dbsession.add(self.userSession)
+        self.dbsession.commit()
+
+        sessionlog = UserSessionLog(
+            user_id=self.user.id,  
             time=now, 
-            host=socket.gethostname(), 
-            port=0, 
+            host=self.userSession.host, 
+            port=self.userSession.port, 
             action='LOGIN')
-            
-        self.session = newSession
+
+        self.dbsession.add(sessionlog)
+        self.dbsession.commit()
+         
             
             
     def logoutSession(self):
-        if self.session != None:
+        if self.userSession != None:
             now = datetime.now()
-            
-            update = sqlb.Delete('session', 
-                        where=(self.db.Session.q.id == self.session.id))
-            query = self.db.connection.sqlrepr(update)
-            self.db.connection.query(query)
-            
-            log = self.db.SessionLog(
-                user=self.user.name, 
-                session=self.session.id, 
+
+            sessionlog = UserSessionLog(
+                user_id=self.user.id, 
                 time=now, 
-                host=socket.gethostname(), 
-                port=0, 
+                host=self.userSession.host, 
+                port=self.userSession.port, 
                 action='LOGOUT')
-                
-            self.session = None
-            
+
+            self.dbsession.add(sessionlog)
+
+            self.dbsession.delete(self.userSession)
+
+            self.dbsession.commit()
+
+            self.userSession = None

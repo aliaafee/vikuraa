@@ -1,6 +1,9 @@
 from datetime import datetime
 import Format
 
+from Database import Session, Item, PaymentMethod, Invoice, Sold, Account
+from sqlalchemy.orm.exc import MultipleResultsFound, NoResultFound
+
 
 class InvoiceLogic(object):
     COL_ID = 0
@@ -46,10 +49,15 @@ class InvoiceLogic(object):
     InvoiceTotal = 0.0
     InvoiceTaxTotal = 0.0
 
-    def __init__(self, db, session, peripherals):
-        self.db = db
-        self.session = session
+    def __init__(self, usersession, peripherals):
+        self.usersession = usersession
         self.peripherals = peripherals
+
+        self.session = Session()
+
+
+    def __del__(self):
+        self.session.close()
 
 
     def Start(self):
@@ -58,17 +66,16 @@ class InvoiceLogic(object):
 
     def AddItem(self, code, byitemid=False):
         if byitemid:
-            try:
-                item = self.db.Item.get(code)
-            except:
+            item = self.session.query(Item).filter(Item.id == code).first()
+            if item == None:
                 print "item not  found"
                 return
         else:
-            query = self.db.Item.select(self.db.Item.q.bcode == code)
-            if query.count() != 1:
+            try:
+                item = self.session.query(Item).filter(Item.bcode == code).one()
+            except (MultipleResultsFound, NoResultFound), e:
+                print e
                 return
-            else:
-                item = query.getOne()
 
         row = self.GetRowWith(self.COL_ID, item.id)
 
@@ -150,20 +157,10 @@ class InvoiceLogic(object):
             return False
 
         try:
-            query = self.db.Item.select(self.db.Item.q.bcode == code)
-        except:
-            print "not found"
-            self.SetListValue(row, col, prev_value)
-            return False
-
-        if query.count() != 1:
-            print "not found 2"
-            self.SetListValue(row, col, prev_value)
-            return False
-
-        print "everything fine"
-
-        item = query.getOne()
+            item = self.session.query(Item).filter(Item.bcode == code).one()
+        except (MultipleResultsFound, NoResultFound), e:
+            print e
+            return
 
         self.SetRow(row,[
                     item.id,
@@ -297,9 +294,7 @@ class InvoiceLogic(object):
         if not self.HasItems():
             return
 
-        query = self.db.PaymentMethod.select()
-
-        paymentMethods = query[0:]
+        paymentMethods = self.session.query(PaymentMethod).order_by(PaymentMethod.id)
 
         payment = self.GetPayment(paymentMethods,self.InvoiceTotal, self.InvoiceTaxTotal)
 
@@ -308,23 +303,25 @@ class InvoiceLogic(object):
         if not paymentOk:
             return
 
-        self.db.startTransaction()
         try:
-            paymentMethod = self.db.PaymentMethod.get(paymentMethodId)
+            paymentMethod = self.session.query(PaymentMethod).filter(PaymentMethod.id == paymentMethodId).one()
             account = paymentMethod.account
 
-            invoice = self.db.Invoice(
-                user = self.session.user.id,
+            invoice = Invoice(
+                user_id = self.usersession.user.id,
                 time = datetime.now(),
                 address = self.GetAddress(),
                 total = self.InvoiceTotal,
                 totalTax = self.InvoiceTaxTotal,
                 tendered = tendered,
                 balance = balance,
-                account = account.id,
-                paymentMethod = paymentMethod.id,
+                account_id = account.id,
+                paymentMethod_id = paymentMethod.id,
                 approvalCode = approvalCode,
                 printed = False)
+
+            self.session.add(invoice)
+            self.session.flush()
 
             account.amount = account.amount + self.InvoiceTotal
 
@@ -342,40 +339,37 @@ class InvoiceLogic(object):
                         self.COL_TOTAL])
             print entries
 
-            for entrie in entries:
-                if entrie[self.COL_ID] == 0:
+            for entry in entries:
+                if entry[self.COL_ID] == 0:
                     #sell openitem
                     print "selling open item"
                 else:
-                    item = self.db.Item.get(entrie[self.COL_ID])
-                    item.stockOut = item.stockOut + entrie[self.COL_QTY]
+                    item = self.session.query(Item).filter(Item.id == entry[self.COL_ID]).one()
+                    item.stockOut = item.stockOut + entry[self.COL_QTY]
 
-                    sold = self.db.Sold(
-                            invoice = invoice.id,
-                            item = item.id,
-                            qty = entrie[self.COL_QTY],
-                            rate = entrie[self.COL_RATE],
-                            total = entrie[self.COL_TOTAL],
-                            discount = entrie[self.COL_DISC],
-                            totalTax = entrie[self.COL_GST])
-
-            if printInvoice:
-                self.Print(invoice)
-
-            self.ClearItems()
-            self.SetAddress('')
-            self.UpdateTotals()
+                    sold = Sold(
+                            invoice_id = invoice.id,
+                            item_id = item.id,
+                            qty = entry[self.COL_QTY],
+                            rate = entry[self.COL_RATE],
+                            total = entry[self.COL_TOTAL],
+                            discount = entry[self.COL_DISC],
+                            totalTax = entry[self.COL_GST])
+                            
+                    self.session.add(sold)
+                    
         except Exception, err:
-            self.db.rollbackTransaction()
+            self.session.rollback()
             print('ERROR: %s\n' % str(err))
 
             print "error invoice not saved"
         else:
-            self.db.commitTransaction()
-        self.db.endTransaction()
+            self.session.commit()
 
-
-
-
-
-
+            if printInvoice:
+                self.Print(invoice)
+            
+            self.ClearItems()
+            self.SetAddress('')
+            self.UpdateTotals()
+            

@@ -1,13 +1,14 @@
 import wx
 
-import sqlobject
-
 from Invoice import Invoice
 from InvoiceLogic import InvoiceLogic
 from DateTimePickerCtrl import DateTimePickerCtrl
 
 import Resource
 import Format
+
+from Database import Invoice as InvoiceTable
+
 
 class InvoiceViewLogic(InvoiceLogic):
     SetInvoiceId = None
@@ -23,14 +24,13 @@ class InvoiceViewLogic(InvoiceLogic):
 
     def Start(self):
         try:
-            query = self.db.Invoice.select()
-            last = query[-1]
-            self.invoice = last
+            query = self.session.query(InvoiceTable)
+            self.invoice = query[-1]
             self.Display()
         except:
             print "There are no invoices"
             self.SetInvoiceId("No Invoices")
-
+        
 
     def Display(self):
         #self.invoice = self.db.Invoice.get(invoiceId)
@@ -65,18 +65,20 @@ class InvoiceViewLogic(InvoiceLogic):
     def OnBack(self, event):
         if self.invoice != None:
             try:
-                self.invoice = self.db.Invoice.get(self.invoice.id - 1)
+                self.invoice = self.session.query(InvoiceTable).\
+                                    filter(InvoiceTable.id == (self.invoice.id - 1)).one()
                 self.Display()
-            except sqlobject.main.SQLObjectNotFound:
+            except:
                 print "No more behind"
 
 
     def OnForward(self, event):
         if self.invoice != None:
             try:
-                self.invoice = self.db.Invoice.get(self.invoice.id + 1)
+                self.invoice = self.session.query(InvoiceTable).\
+                                    filter(InvoiceTable.id == (self.invoice.id + 1)).one()
                 self.Display()
-            except sqlobject.main.SQLObjectNotFound:
+            except:
                 print "No more ahead"
 
 
@@ -87,12 +89,14 @@ class InvoiceViewLogic(InvoiceLogic):
     def GoToInvoice(self, invoiceId):
         try:
             invoiceId = int(invoiceId)
-            self.invoice = self.db.Invoice.get(invoiceId)
+            self.invoice = self.session.query(InvoiceTable).\
+                                    filter(InvoiceTable.id == (invoiceId)).one()
             self.Display()
-        except (ValueError,sqlobject.main.SQLObjectNotFound), e:
+        except:
             self.SetInvoiceId(str(self.invoice.id))
             self.InvoiceIdError()
             return
+
 
 
 

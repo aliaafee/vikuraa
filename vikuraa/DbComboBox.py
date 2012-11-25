@@ -1,5 +1,5 @@
 import wx
-
+from Database import Session
 
 class DbComboBox(wx.ComboBox):
     def __init__(self, parent, table=None):
@@ -19,12 +19,14 @@ class DbComboBox(wx.ComboBox):
 
 
     def Populate(self):
+        session = Session()
         if self.table == None:
             return
-        query = self.table.select()
+        query = session.query(self.table)
         for item in query:
             self.Append(item.name, item.id)
         self.SetSelection(0)
+        session.close()
 
 
     def GetValue(self):
@@ -64,13 +66,13 @@ class DbComboBox(wx.ComboBox):
 if __name__ == "__main__":
     import Database
     import os.path
-    uri = 'sqlite:' + os.path.abspath('shop.db') #+ '?debug=t'
-    db = Database.Db(uri)
+    uri = 'sqlite:///' + os.path.abspath('test.db') #+ '?debug=t'
+    Database.StartEngine(uri)
 
     app = wx.App()
     frame = wx.Frame(None)
     pnl = DbComboBox(frame)
-    pnl.SetDataSource(db.User)
+    pnl.SetDataSource(Database.User)
     pnl.SetValue(2)
     pnl.Refresh()
     print pnl.GetValue()
@@ -78,8 +80,6 @@ if __name__ == "__main__":
     sz.Add(pnl,0,wx.ALL|wx.EXPAND,10)
     frame.SetSizer(sz)
     frame.Show()
-
-
 
     app.MainLoop()
 

@@ -14,11 +14,10 @@ from LoginPrompt import LoginPrompt
 import Resource
 
 
-
 class MainFrame(wx.Frame):
     _InvoiceCount = 0
 
-    def __init__(self, parent, db, session, peripherals):
+    def __init__(self, parent, session, peripherals):
         wx.Frame.__init__(
             self,
             name = 'MainFrame',
@@ -30,7 +29,6 @@ class MainFrame(wx.Frame):
         self._InitMenu()
         self._InitCtrls()
 
-        self.db = db
         self.session = session
         self.peripherals = peripherals
 
@@ -164,6 +162,7 @@ class MainFrame(wx.Frame):
                 return False
 
         return True
+    
 
     def OnClosePage(self, event):
         window = self.plMain.GetPage(event.GetSelection())
@@ -182,7 +181,6 @@ class MainFrame(wx.Frame):
         if self.session.user == None:
             event.Skip()
             return
-
 
         if not self.IsSaved():
             dlg = wx.MessageDialog(None, 'There is some unsaved data. Are you sure you want to exit without saving?', 'Unsaved data',
@@ -218,7 +216,7 @@ class MainFrame(wx.Frame):
         window = Invoice(
                 self.plMain,
                 'New Sale {0}'.format(self._InvoiceCount),
-                InvoiceLogic(self.db, self.session, self.peripherals))
+                InvoiceLogic(self.session, self.peripherals))
 
         window.AddToAuiNotebook(self.plMain)
 
@@ -227,7 +225,7 @@ class MainFrame(wx.Frame):
         window = InvoiceView(
                 self.plMain,
                 'View Sales',
-                InvoiceViewLogic(self.db, self.session, self.peripherals))
+                InvoiceViewLogic(self.session, self.peripherals))
 
         window.AddToAuiNotebook(self.plMain)
 
@@ -236,7 +234,7 @@ class MainFrame(wx.Frame):
         window = Purchase(
                 self.plMain,
                 'Purchases',
-                PurchaseLogic(self.db, self.session, self.peripherals))
+                PurchaseLogic(self.session, self.peripherals))
 
         window.AddToAuiNotebook(self.plMain)
 
