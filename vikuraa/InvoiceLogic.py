@@ -236,7 +236,8 @@ class InvoiceLogic(object):
             ['', p.ALIGN_R, ['ID:{0}'.format(invoice.id)]]])
         p.Line_b()
         if invoice.address != '':
-            p.Line_l('Billed to {0}'.format(invoice.address), trimtopagewidth=False)
+            p.Line_l('Billed to:')
+            p.Line_l(invoice.address, trimtopagewidth=False)
             p.Line_b()
         if invoice.printed:
             p.Line_c("###### REPRINT ######")

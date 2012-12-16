@@ -78,8 +78,8 @@ class Invoice(VWindow):
     def InitControls(self):
         self.list = self.InitList()
 
-        stAddress = wx.StaticText(self,label = 'Address')
-        self.tcAddress = wx.TextCtrl(self)
+        stAddress = wx.StaticText(self, label = 'Address')
+        self.tcAddress = wx.TextCtrl(self, size=wx.Size(-1, 10), style=wx.TE_MULTILINE)
 
         self.fontMed = wx.Font(
             16,
@@ -103,18 +103,22 @@ class Invoice(VWindow):
 
         gridl, gridr, top = self.Layout2()
 
-        gridl.Add(stAddress, 0, wx.ALL, 3)
-        gridl.Add(self.tcAddress, 0, wx.ALL| wx.EXPAND, 3)
-        gridr.AddSpacer(0)
-        gridr.Add(self.numdisplay, 1, wx.ALL | wx.EXPAND, 3)
+        gridl.Add(stAddress, 1, wx.ALL, 3)
+        gridl.Add(self.tcAddress, 1, wx.ALL| wx.EXPAND, 3)
+        #gridl.AddSpacer(0)
+        #gridl.AddSpacer(0)
+        
         hbox = wx.BoxSizer(wx.HORIZONTAL)
-        hbox.Add(self.tcQty,0,wx.ALL,0)
+        hbox.Add(self.tcQty,0,wx.ALL | wx.EXPAND,0)
         hbox.Add(self.tcCode,1,wx.ALL | wx.EXPAND, 0)
-        gridl.AddSpacer(0)
-        gridl.AddSpacer(0)
+        
         gridl.Add(stQty,0,wx.ALL | wx.ALIGN_CENTER_VERTICAL,3)
         gridl.Add(hbox, 0, wx.ALL | wx.EXPAND, 3)
-        gridl.AddGrowableRow(1)
+        
+        gridl.AddGrowableRow(0)
+        
+        gridr.AddSpacer(0)
+        gridr.Add(self.numdisplay, 1, wx.ALL | wx.EXPAND, 3)
 
         top.Add(self.list, 1, wx.ALL|wx.EXPAND, 3)
 
