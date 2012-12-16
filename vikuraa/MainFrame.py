@@ -121,7 +121,8 @@ class MainFrame(wx.Frame):
                     user, password = dlg.getLogin()
 
                     if self.session.Login(user, password):
-                        break
+                        self.stUserName.SetLabel(self.session.user.name)
+                        self.Layout()
                     else:
                         print "Invalid Username/Password"
                         wx.MessageBox('Invalid Username/Password', 'Login Error',
@@ -129,6 +130,9 @@ class MainFrame(wx.Frame):
                 else:
                     self.Close()
                     break
+        else:
+            self.stUserName.SetLabel(self.session.user.name)
+            self.Layout()
 
 
     def OnLogOut(self, event):
@@ -144,6 +148,8 @@ class MainFrame(wx.Frame):
         for i in range(self.plMain.GetPageCount()):
             self.plMain.DeletePage(0)
         self.session.Logout()
+        self.stUserName.SetLabel('')
+        self.Layout()
         self.DoLogin()
 
 
