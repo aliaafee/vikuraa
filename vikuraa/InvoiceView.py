@@ -36,6 +36,7 @@ class InvoiceViewLogic(InvoiceLogic):
         #self.invoice = self.db.Invoice.get(invoiceId)
         self.SetInvoiceId(str(self.invoice.id))
         self.SetDate(self.invoice.time)
+        self.SetAddress(self.invoice.address)
         self.ClearItems()
         for sold in self.invoice.items:
             self.InsertRow([
@@ -125,6 +126,7 @@ class InvoiceView(Invoice):
         logic.SetTax = self.tcTax.SetValue
         logic.SetInvoiceId = self.tcInvoiceId.SetValue
         logic.SetDate = self.tcDate.SetValue
+        logic.SetAddress = self.tcAddress.SetValue
         logic.SetPaymentMethod = self.tcPaymentMethod.SetValue
         logic.SetApprovalCode = self.tcApprovalCode.SetValue
         logic.SetTendered = self.tcTendered.SetValue
@@ -180,12 +182,13 @@ class InvoiceView(Invoice):
         self.tcDate = DateTimePickerCtrl(self)
 
         stAddress = wx.StaticText(self,label = 'Address')
-        self.tcAddress = wx.TextCtrl(self)
+        self.tcAddress = wx.TextCtrl(self, size=wx.Size(-1, 10), style=wx.TE_MULTILINE)
 
         gridl.Add(stDate, 0, wx.ALL, 3)
         gridl.Add(self.tcDate, 0, wx.ALL|wx.EXPAND, 3)
         gridl.Add(stAddress, 0, wx.ALL, 3)
-        gridl.Add(self.tcAddress, 0, wx.ALL|wx.EXPAND, 3)
+        gridl.Add(self.tcAddress, 1, wx.ALL|wx.EXPAND, 3)
+        gridl.AddGrowableRow(1)
 
 
         self.tcTotal,self.tcTax,self.tcPaymentMethod,self.tcApprovalCode,self.tcTendered,self.tcBalance = self.LabeledTextCtrls(
