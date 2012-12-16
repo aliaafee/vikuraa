@@ -27,10 +27,16 @@ class Vikuraa(wx.App):
         return True
 
 
-def start(dbconnectionstring):
+def start(dbconnectionstring, username, password):
     Database.StartEngine(dbconnectionstring)
 
     session = SessionManager()
+    
+    if username != '' and password != '':
+        if session.Login(username, password):
+            print "Login success"
+        else:
+            print "Login Error Invalid Username/Password"
 
     peripherals = Peripherals
 
@@ -58,6 +64,12 @@ def usage():
     print "    -h, --help"
     print "       Displays this help"
     print " "
+    print "    -u, --user"
+    print "       Username to login"
+    print " "
+    print "    -p, --password"
+    print "       Password to login"
+    print " "
     print "    -l, --log"
     print "       Log file for error, if not set error to stdout"
     print " "
@@ -65,23 +77,29 @@ def usage():
 
 def main(argv):
     try:
-        opts, args = getopt.getopt(argv, "hl:", ["help", "log="])
+        opts, args = getopt.getopt(argv, "hl:u:p:", ["help", "log=", "user=", "password="])
     except getopt.GetoptError:
         usage()
         sys.exit(2)
 
     log = ''
+    username = ''
+    password = ''
     for opt, arg in opts:
         if opt in ("-h", "--help"):
             usage()
             sys.exit()
         elif opt in ("-l", "--log"):
             log = arg
+        elif opt in ("-u", "--user"):
+            username = arg 
+        elif opt in ("-p", "--password"):
+            password = arg
 
     uri = 'sqlite:///' + os.path.abspath('shop.db')
 
     if log == '':
-        start(uri)
+        start(uri, username, password)
     else:
         "Log all errors to log file"
         import logging
