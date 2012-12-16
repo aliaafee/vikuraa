@@ -24,7 +24,9 @@ class MainFrame(wx.Frame):
             title = 'Vikuraa',
             parent = parent,
             style = wx.DEFAULT_FRAME_STYLE,
-            size = wx.Size(800, 600))
+            size = wx.Size(800, 600)
+            #size = wx.DisplaySize()
+            )
 
         self._InitMenu()
         self._InitCtrls()
@@ -123,6 +125,7 @@ class MainFrame(wx.Frame):
                     if self.session.Login(user, password):
                         self.stUserName.SetLabel(self.session.user.name)
                         self.Layout()
+                        break
                     else:
                         print "Invalid Username/Password"
                         wx.MessageBox('Invalid Username/Password', 'Login Error',
