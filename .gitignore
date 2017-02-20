@@ -1,0 +1,11 @@
+
+# /
+/shop.db
+
+# /res/
+/res/Thumbs.db
+/res/*.db
+
+# /vikuraa-win/
+/vikuraa-win/src
+/vikuraa-win/test.bat
